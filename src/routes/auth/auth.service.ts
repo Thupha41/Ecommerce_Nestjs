@@ -4,6 +4,7 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintError, isNotFoundError } from 'src/shared/helpers'
 import { RolesService } from './role.service'
+import { RegisterBodyDTO } from './auth.dto'
 @Injectable()
 export class AuthService {
   constructor(
@@ -13,7 +14,7 @@ export class AuthService {
     private readonly roleService: RolesService,
   ) {}
 
-  async register(body: any) {
+  async register(body: RegisterBodyDTO) {
     try {
       const clientRoleId = await this.roleService.getClientRoleId()
       const hashingPassword = await this.hashingService.hash(body.password)
