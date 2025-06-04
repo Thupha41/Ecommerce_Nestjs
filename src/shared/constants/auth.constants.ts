@@ -19,3 +19,8 @@ export const UserStatus = {
   BLOCKED: 'BLOCKED',
   INACTIVE: 'INACTIVE',
 } as const
+
+export const TypeOfVerificationCode = {
+  REGISTER: 'REGISTER',
+  FORGOT_PASSWORD: 'FORGOT_PASSWORD',
+} as const

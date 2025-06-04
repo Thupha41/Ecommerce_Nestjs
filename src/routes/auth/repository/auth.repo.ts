@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/shared/services/prisma.service'
-import { RegisterBodyType, UserType } from '../auth.model'
+import { RegisterBodyType, VerificationCodeType } from '../auth.model'
 import { IAuthRepository } from './auth.repo.interface'
+import { UserType } from 'src/shared/models/shared-user.model'
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {
@@ -16,12 +17,6 @@ export class AuthRepository implements IAuthRepository {
         password: true,
         totpSecret: true,
       },
-    })
-  }
-
-  async findUserByEmail(email: string): Promise<UserType | null> {
-    return await this.prismaService.user.findUnique({
-      where: { email },
     })
   }
 
@@ -45,6 +40,19 @@ export class AuthRepository implements IAuthRepository {
   async deleteRefreshToken(token: string): Promise<void> {
     await this.prismaService.refreshToken.delete({
       where: { token },
+    })
+  }
+
+  async createVerificationCode(
+    payload: Pick<VerificationCodeType, 'email' | 'code' | 'type' | 'expiresAt'>,
+  ): Promise<VerificationCodeType> {
+    return await this.prismaService.verificationCode.upsert({
+      where: { email: payload.email },
+      create: payload,
+      update: {
+        code: payload.code,
+        expiresAt: payload.expiresAt,
+      },
     })
   }
 }

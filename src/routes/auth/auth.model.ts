@@ -1,25 +1,14 @@
-import { UserStatus } from 'src/shared/constants/auth.constants'
+import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
 import { z } from 'zod'
+import { UserSchema } from 'src/shared/models/shared-user.model'
 
-const UserSchema = z.object({
+export const VerificationCodeSchema = z.object({
   id: z.number(),
   email: z.string().email(),
-  name: z.string().min(1).max(100),
-  password: z.string().min(8).max(100),
-  phoneNumber: z
-    .string()
-    .min(10, { message: 'Phone number must be at least 10 digits' })
-    .max(11, { message: 'Phone number must not exceed 11 digits' })
-    .regex(/^(0|\+84)\d{9,10}$/, { message: 'Invalid phone number format' }),
-  avatar: z.string().nullable(),
-  totpSecret: z.string().nullable(),
-  status: z.enum([UserStatus.ACTIVE, UserStatus.BLOCKED, UserStatus.INACTIVE]),
-  roleId: z.number().positive(),
+  code: z.string().length(6),
+  type: z.enum([TypeOfVerificationCode.REGISTER, TypeOfVerificationCode.FORGOT_PASSWORD]),
+  expiresAt: z.date(),
   createdAt: z.date(),
-  updatedAt: z.date(),
-  deletedAt: z.date().nullable(),
-  createdById: z.number().nullable(),
-  updatedById: z.number().nullable(),
 })
 
 const TokenSchema = z.object({
@@ -27,7 +16,6 @@ const TokenSchema = z.object({
   refreshToken: z.string(),
 })
 
-export type UserType = z.infer<typeof UserSchema>
 /*
   1. Strict: Kiểm tra tất cả các trường được định nghĩa trong schema.
   Nếu có trường nào không khớp với schema, sẽ ném ra lỗi.
@@ -60,6 +48,19 @@ export const RegisterBodySchema = UserSchema.pick({
     }
   })
 
+export const SendOTPBodySchema = VerificationCodeSchema.pick({
+  email: true,
+  type: true,
+})
+  .strict()
+  .superRefine(({ type }, ctx) => {
+    if (type !== TypeOfVerificationCode.REGISTER && type !== TypeOfVerificationCode.FORGOT_PASSWORD) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid verification code type', path: ['type'] })
+    }
+  })
+
+export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>
+
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 
 export const RegisterResSchema = UserSchema.omit({
@@ -91,3 +92,5 @@ export const LogoutBodySchema = TokenSchema.pick({
 })
 
 export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
+
+export type VerificationCodeType = z.infer<typeof VerificationCodeSchema>

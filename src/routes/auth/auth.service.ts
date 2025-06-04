@@ -7,10 +7,14 @@ import {
 } from '@nestjs/common'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
-import { isUniqueConstraintError, isNotFoundError } from 'src/shared/helpers'
+import { isUniqueConstraintError, isNotFoundError, generateOTP } from 'src/shared/helpers'
 import { RolesService } from './role.service'
-import { LoginBodyType, RefreshTokenBodyType, LogoutBodyType, RegisterBodyType } from './auth.model'
+import { LoginBodyType, RefreshTokenBodyType, LogoutBodyType, RegisterBodyType, SendOTPBodyType } from './auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
+import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
+import { addMilliseconds } from 'date-fns'
+import ms from 'ms'
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -18,6 +22,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly roleService: RolesService,
     @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
+    @Inject('ISharedUserRepository') private readonly sharedUserRepository: ISharedUserRepository,
   ) {}
 
   async register(body: RegisterBodyType) {
@@ -36,7 +41,12 @@ export class AuthService {
       console.log('>>> check register error', error)
       if (isUniqueConstraintError(error)) {
         if (error.meta?.target instanceof Array && error.meta.target[0] === 'email') {
-          throw new ConflictException('Email already exists')
+          throw new ConflictException([
+            {
+              message: 'Email already exists',
+              path: 'email',
+            },
+          ])
         }
       }
       throw error
@@ -45,7 +55,7 @@ export class AuthService {
 
   async login(body: LoginBodyType) {
     //check email exist in db
-    const checkEmailExist = await this.authRepository.findUserByEmail(body.email)
+    const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email: body.email })
     if (!checkEmailExist) {
       throw new UnauthorizedException('Email not found')
     }
@@ -132,6 +142,34 @@ export class AuthService {
         throw new UnauthorizedException('Refresh has been revoked')
       }
       throw new UnauthorizedException('Refresh token not found')
+    }
+  }
+
+  async sendOTP(body: SendOTPBodyType) {
+    const { email, type } = body
+    //1. check email exist
+    const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email })
+    if (checkEmailExist) {
+      throw new ConflictException([
+        {
+          message: 'Email already exists',
+          path: 'email',
+        },
+      ])
+    }
+
+    //2. Generate OTP
+    const otp = generateOTP(6)
+    const verificationCode = await this.authRepository.createVerificationCode({
+      email,
+      code: otp,
+      type,
+      expiresAt: addMilliseconds(new Date(), ms('5m')),
+    })
+
+    return {
+      message: 'OTP sent successfully',
+      verificationCode,
     }
   }
 }
