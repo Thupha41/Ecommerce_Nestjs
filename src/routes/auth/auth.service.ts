@@ -4,7 +4,7 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintError, isNotFoundError } from 'src/shared/helpers'
 import { RolesService } from './role.service'
-import { RegisterBodyDTO } from './auth.dto'
+import { LoginBodyDTO, RefreshTokenBodyDTO, LogoutBodyDTO, RegisterBodyDTO } from './auth.dto'
 @Injectable()
 export class AuthService {
   constructor(
@@ -43,7 +43,7 @@ export class AuthService {
     }
   }
 
-  async login(body: any) {
+  async login(body: LoginBodyDTO) {
     //check email exist in db
     const checkEmailExist = await this.prismaService.user.findUnique({
       where: {
@@ -94,7 +94,7 @@ export class AuthService {
     }
   }
 
-  async refreshToken(body: any) {
+  async refreshToken(body: RefreshTokenBodyDTO) {
     try {
       //verify refresh token
       const { userId } = await this.tokenService.verifyRefreshToken(body.refreshToken)
@@ -128,7 +128,7 @@ export class AuthService {
     }
   }
 
-  async logout(body: any) {
+  async logout(body: LogoutBodyDTO) {
     try {
       //verify refresh token
       await this.tokenService.verifyRefreshToken(body.refreshToken)
