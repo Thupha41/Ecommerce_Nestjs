@@ -14,6 +14,7 @@ import { IAuthRepository } from './repository/auth.repo.interface'
 import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
 import { addMilliseconds } from 'date-fns'
 import ms from 'ms'
+import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,28 @@ export class AuthService {
 
   async register(body: RegisterBodyType) {
     try {
+      const verificationCode = await this.authRepository.findUniqueVerificationCode({
+        email: body.email,
+        type: TypeOfVerificationCode.REGISTER,
+        code: body.code,
+      })
+
+      if (!verificationCode) {
+        throw new UnprocessableEntityException([
+          {
+            field: 'code',
+            error: 'Invalid verification code',
+          },
+        ])
+      }
+      if (verificationCode.expiresAt < new Date()) {
+        throw new UnprocessableEntityException([
+          {
+            field: 'code',
+            error: 'Verification code has expired',
+          },
+        ])
+      }
       const clientRoleId = await this.roleService.getClientRoleId()
       const hashingPassword = await this.hashingService.hash(body.password)
 

@@ -3,13 +3,14 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 import { RegisterBodyType, VerificationCodeType } from '../auth.model'
 import { IAuthRepository } from './auth.repo.interface'
 import { UserType } from 'src/shared/models/shared-user.model'
+import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async createUser(
-    user: Omit<RegisterBodyType, 'confirmPassword'> & Pick<UserType, 'roleId'>,
+    user: Omit<RegisterBodyType, 'confirmPassword' | 'code'> & Pick<UserType, 'roleId'>,
   ): Promise<Omit<UserType, 'password' | 'totpSecret'>> {
     return await this.prismaService.user.create({
       data: user,
@@ -53,6 +54,14 @@ export class AuthRepository implements IAuthRepository {
         code: payload.code,
         expiresAt: payload.expiresAt,
       },
+    })
+  }
+
+  async findUniqueVerificationCode(
+    uniqueValue: { email: string } | { id: number } | { email: string; type: TypeOfVerificationCode; code: string },
+  ): Promise<VerificationCodeType | null> {
+    return await this.prismaService.verificationCode.findUnique({
+      where: uniqueValue,
     })
   }
 }

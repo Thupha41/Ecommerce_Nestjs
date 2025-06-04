@@ -36,6 +36,7 @@ export const RegisterBodySchema = UserSchema.pick({
       .string()
       .min(8, { message: 'Confirm password must be at least 8 characters' })
       .max(100, { message: 'Confirm password is too long' }),
+    code: z.string().length(6),
   })
   .strict()
   .superRefine(({ confirmPassword, password }, ctx) => {
