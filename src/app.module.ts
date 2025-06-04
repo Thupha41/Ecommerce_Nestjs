@@ -7,6 +7,7 @@ import { AuthModule } from './routes/auth/auth.module'
 import CustomZodValidationPipe from './shared/pipes/custom-validation.pipe'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
+import { CatchEverythingFilter } from './shared/filters/catch-everything.filter'
 @Module({
   imports: [SharedModule, AuthModule],
   controllers: [AppController],
@@ -24,6 +25,11 @@ import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    //Xử lý lỗi khi để catch exception
+    {
+      provide: APP_FILTER,
+      useClass: CatchEverythingFilter,
     },
   ],
 })
