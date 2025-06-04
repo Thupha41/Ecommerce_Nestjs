@@ -1,37 +1,37 @@
-import { ConflictException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common'
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common'
 import { HashingService } from 'src/shared/services/hashing.service'
-import { PrismaService } from 'src/shared/services/prisma.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintError, isNotFoundError } from 'src/shared/helpers'
 import { RolesService } from './role.service'
-import { LoginBodyDTO, RefreshTokenBodyDTO, LogoutBodyDTO, RegisterBodyDTO } from './auth.dto'
+import { LoginBodyType, RefreshTokenBodyType, LogoutBodyType, RegisterBodyType } from './auth.model'
+import { IAuthRepository } from './repository/auth.repo.interface'
 @Injectable()
 export class AuthService {
   constructor(
     private readonly hashingService: HashingService,
-    private readonly prismaService: PrismaService,
     private readonly tokenService: TokenService,
     private readonly roleService: RolesService,
+    @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
   ) {}
 
-  async register(body: RegisterBodyDTO) {
+  async register(body: RegisterBodyType) {
     try {
       const clientRoleId = await this.roleService.getClientRoleId()
       const hashingPassword = await this.hashingService.hash(body.password)
-      const user = await this.prismaService.user.create({
-        data: {
-          email: body.email,
-          name: body.name,
-          password: hashingPassword,
-          phoneNumber: body.phoneNumber,
-          roleId: clientRoleId,
-        },
-        omit: {
-          password: true,
-          totpSecret: true,
-        },
+
+      return await this.authRepository.createUser({
+        name: body.name,
+        email: body.email,
+        password: hashingPassword,
+        phoneNumber: body.phoneNumber,
+        roleId: clientRoleId,
       })
-      return user
     } catch (error) {
       console.log('>>> check register error', error)
       if (isUniqueConstraintError(error)) {
@@ -43,13 +43,9 @@ export class AuthService {
     }
   }
 
-  async login(body: LoginBodyDTO) {
+  async login(body: LoginBodyType) {
     //check email exist in db
-    const checkEmailExist = await this.prismaService.user.findUnique({
-      where: {
-        email: body.email,
-      },
-    })
+    const checkEmailExist = await this.authRepository.findUserByEmail(body.email)
     if (!checkEmailExist) {
       throw new UnauthorizedException('Email not found')
     }
@@ -80,13 +76,7 @@ export class AuthService {
 
     const decodeRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken)
 
-    await this.prismaService.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: payload.userId,
-        expiresAt: new Date(decodeRefreshToken.exp * 1000),
-      },
-    })
+    await this.authRepository.createRefreshToken(refreshToken, payload.userId, new Date(decodeRefreshToken.exp * 1000))
 
     return {
       accessToken,
@@ -94,26 +84,18 @@ export class AuthService {
     }
   }
 
-  async refreshToken(body: RefreshTokenBodyDTO) {
+  async refreshToken(body: RefreshTokenBodyType) {
     try {
       //verify refresh token
       const { userId } = await this.tokenService.verifyRefreshToken(body.refreshToken)
 
       //check refresh token exist
-      const checkRefreshTokenExist = await this.prismaService.refreshToken.findUniqueOrThrow({
-        where: {
-          token: body.refreshToken,
-        },
-      })
+      const checkRefreshTokenExist = await this.authRepository.findRefreshToken(body.refreshToken)
       if (!checkRefreshTokenExist) {
         throw new UnauthorizedException('Refresh token not found')
       }
       //xóa refresh token cũ
-      await this.prismaService.refreshToken.delete({
-        where: {
-          token: body.refreshToken,
-        },
-      })
+      await this.authRepository.deleteRefreshToken(body.refreshToken)
 
       //tạo token mới
       const token = await this.generateTokens({ userId })
@@ -128,26 +110,18 @@ export class AuthService {
     }
   }
 
-  async logout(body: LogoutBodyDTO) {
+  async logout(body: LogoutBodyType) {
     try {
       //verify refresh token
       await this.tokenService.verifyRefreshToken(body.refreshToken)
 
       //check refresh token exist
-      const checkRefreshTokenExist = await this.prismaService.refreshToken.findUniqueOrThrow({
-        where: {
-          token: body.refreshToken,
-        },
-      })
+      const checkRefreshTokenExist = await this.authRepository.findRefreshToken(body.refreshToken)
       if (!checkRefreshTokenExist) {
         throw new UnauthorizedException('Refresh token not found')
       }
       //xóa refresh token cũ
-      await this.prismaService.refreshToken.delete({
-        where: {
-          token: body.refreshToken,
-        },
-      })
+      await this.authRepository.deleteRefreshToken(body.refreshToken)
 
       return {
         message: 'Logout successfully',
