@@ -45,5 +45,30 @@ const RegisterBodySchema = z
     }
   })
 
+const LoginBodySchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(8).max(100),
+  })
+  .strict()
+
+const TokenResSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+})
+
+const RefreshTokenBodySchema = z.object({
+  refreshToken: z.string(),
+})
+
+const LogoutBodySchema = z.object({
+  refreshToken: z.string(),
+})
+
 export class RegisterBodyDTO extends createZodDto(RegisterBodySchema) {}
 export class RegisterResDto extends createZodDto(UserSchema) {}
+export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
+export class LoginResDto extends createZodDto(TokenResSchema) {}
+export class RefreshTokenBodyDTO extends createZodDto(RefreshTokenBodySchema) {}
+export class RefreshTokenResDto extends createZodDto(TokenResSchema) {}
+export class LogoutBodyDTO extends createZodDto(LogoutBodySchema) {}
