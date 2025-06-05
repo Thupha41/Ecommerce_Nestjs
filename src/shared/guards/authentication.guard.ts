@@ -52,7 +52,7 @@ export class AuthenticationGuard implements CanActivate {
     const authTypeVal = this.reflector.getAllAndOverride<AuthTypeDecoratorPayload | undefined>(AUTH_TYPES_KEY, [
       context.getHandler(),
       context.getClass(),
-    ]) ?? { authTypes: [AUTH_TYPE.NONE], options: { condition: ConditionGuard.AND } }
+    ]) ?? { authTypes: [AUTH_TYPE.BEARER], options: { condition: ConditionGuard.AND } }
 
     //Log cho thấy metadata là: {authTypes: ['Bearer', 'ApiKey'], options: {condition: 'OR'}}
     console.log('>>> check authTypeVal', authTypeVal)
