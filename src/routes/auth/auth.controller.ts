@@ -39,8 +39,8 @@ export class AuthController {
   @UseGuards(AccessTokenGuard)
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(TokenResDTO)
-  async refreshToken(@Body() body: RefreshTokenBodyDTO) {
-    return await this.authService.refreshToken(body)
+  async refreshToken(@Body() body: RefreshTokenBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
+    return await this.authService.refreshToken({ ...body, userAgent, ip })
   }
 
   @Post('logout')

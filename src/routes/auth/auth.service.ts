@@ -9,7 +9,7 @@ import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintError, isNotFoundError, generateOTP } from 'src/shared/helpers'
 import { RolesService } from './role.service'
-import { LoginBodyType, RefreshTokenBodyType, LogoutBodyType, RegisterBodyType, SendOTPBodyType } from './auth.model'
+import { RefreshTokenBodyType, LogoutBodyType, RegisterBodyType, SendOTPBodyType } from './auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
 import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
 import { addMilliseconds } from 'date-fns'
@@ -148,21 +148,42 @@ export class AuthService {
 
   async refreshToken({ refreshToken, ip, userAgent }: RefreshTokenBodyType & { ip: string; userAgent: string }) {
     try {
-      //verify refresh token
-      const { userId } = await this.tokenService.verifyRefreshToken(body.refreshToken)
+      //1. verify refresh token
+      const { userId } = await this.tokenService.verifyRefreshToken(refreshToken)
 
-      //check refresh token exist
-      const checkRefreshTokenExist = await this.authRepository.findRefreshToken(refreshToken)
+      //2. check refresh token exist
+      const checkRefreshTokenExist = await this.authRepository.findUniqueRefreshTokenIncludeUserRole({
+        token: refreshToken,
+      })
       if (!checkRefreshTokenExist) {
-        throw new UnauthorizedException('Refresh token not found')
+        throw new UnauthorizedException('Refresh token has been revoked')
       }
-      //xóa refresh token cũ
-      await this.authRepository.deleteRefreshToken(refreshToken)
 
-      //tạo token mới
-      // const token = await this.generateTokens({ userId, deviceId: checkRefreshTokenExist.deviceId, roleId: checkRefreshTokenExist.roleId, roleName: checkRefreshTokenExist.role.name })
+      //3. Cập nhật device
+      const {
+        deviceId,
+        user: { roleId, name: roleName },
+      } = checkRefreshTokenExist
 
-      // return token
+      const $updateDevice = await this.authRepository.updateDevice(deviceId, {
+        ip,
+        userAgent,
+      })
+
+      //4. xóa refresh token cũ
+      const $deleteRefreshToken = this.authRepository.deleteRefreshToken({ token: refreshToken })
+
+      //4. tạo token mới
+      const $tokens = this.generateTokens({
+        userId,
+        deviceId,
+        roleId,
+        roleName,
+      })
+
+      const [, , tokens] = await Promise.all([$updateDevice, $deleteRefreshToken, $tokens])
+
+      return tokens
     } catch (error) {
       console.log('>>> check refresh token error', error)
       if (isNotFoundError(error)) {
@@ -183,7 +204,7 @@ export class AuthService {
         throw new UnauthorizedException('Refresh token not found')
       }
       //xóa refresh token cũ
-      await this.authRepository.deleteRefreshToken(body.refreshToken)
+      await this.authRepository.deleteRefreshToken({ token: body.refreshToken })
 
       return {
         message: 'Logout successfully',
