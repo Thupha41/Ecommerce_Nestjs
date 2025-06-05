@@ -16,6 +16,7 @@ import { addMilliseconds } from 'date-fns'
 import ms from 'ms'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
 import { EmailService } from 'src/shared/services/email.service'
+import { IAccessTokenPayloadCreate } from 'src/shared/types/jwt.types'
 @Injectable()
 export class AuthService {
   constructor(
@@ -77,17 +78,15 @@ export class AuthService {
     }
   }
 
-  async login(body: LoginBodyType) {
-    //check email exist in db
-    const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email: body.email })
+  async login(body: any) {
+    //1> check email exist in db
+    const checkEmailExist = await this.authRepository.findUserUniqueUserIncludeRole({ email: body.email })
     if (!checkEmailExist) {
       throw new UnauthorizedException('Email not found')
     }
 
-    //check password is match in db
+    //2 > check password is match in db
     const isPassMatch = await this.hashingService.compare(body.password, checkEmailExist.password)
-    // if (!isPassMatch) throw new UnauthorizedException('Password does not match, please try again')
-
     if (!isPassMatch) {
       throw new UnprocessableEntityException([
         {
@@ -97,20 +96,49 @@ export class AuthService {
       ])
     }
 
-    const token = await this.generateTokens({ userId: checkEmailExist.id })
+    //3> Create Device
+    const device = await this.authRepository.createDevice({
+      userId: checkEmailExist.id,
+      userAgent: body.userAgent,
+      ip: body.ip,
+    })
+
+    if (!device) {
+      throw new Error('Failed to create device')
+    }
+
+    //4> Create token
+    const token = await this.generateTokens({
+      userId: checkEmailExist.id,
+      deviceId: device.id,
+      roleId: checkEmailExist.roleId,
+      roleName: checkEmailExist.role.name,
+    })
 
     return token
   }
 
-  async generateTokens(payload: { userId: number }) {
+  async generateTokens(payload: IAccessTokenPayloadCreate) {
     const [accessToken, refreshToken] = await Promise.all([
-      this.tokenService.signAccessToken(payload),
-      this.tokenService.signRefreshToken(payload),
+      this.tokenService.signAccessToken({
+        userId: payload.userId,
+        roleId: payload.roleId,
+        roleName: payload.roleName,
+        deviceId: payload.deviceId,
+      }),
+      this.tokenService.signRefreshToken({
+        userId: payload.userId,
+      }),
     ])
 
     const decodeRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken)
 
-    await this.authRepository.createRefreshToken(refreshToken, payload.userId, new Date(decodeRefreshToken.exp * 1000))
+    await this.authRepository.createRefreshToken(
+      refreshToken,
+      payload.userId,
+      new Date(decodeRefreshToken.exp * 1000),
+      payload.deviceId,
+    )
 
     return {
       accessToken,
@@ -118,23 +146,23 @@ export class AuthService {
     }
   }
 
-  async refreshToken(body: RefreshTokenBodyType) {
+  async refreshToken({ refreshToken, ip, userAgent }: RefreshTokenBodyType & { ip: string; userAgent: string }) {
     try {
       //verify refresh token
       const { userId } = await this.tokenService.verifyRefreshToken(body.refreshToken)
 
       //check refresh token exist
-      const checkRefreshTokenExist = await this.authRepository.findRefreshToken(body.refreshToken)
+      const checkRefreshTokenExist = await this.authRepository.findRefreshToken(refreshToken)
       if (!checkRefreshTokenExist) {
         throw new UnauthorizedException('Refresh token not found')
       }
       //xóa refresh token cũ
-      await this.authRepository.deleteRefreshToken(body.refreshToken)
+      await this.authRepository.deleteRefreshToken(refreshToken)
 
       //tạo token mới
-      const token = await this.generateTokens({ userId })
+      // const token = await this.generateTokens({ userId, deviceId: checkRefreshTokenExist.deviceId, roleId: checkRefreshTokenExist.roleId, roleName: checkRefreshTokenExist.role.name })
 
-      return token
+      // return token
     } catch (error) {
       console.log('>>> check refresh token error', error)
       if (isNotFoundError(error)) {

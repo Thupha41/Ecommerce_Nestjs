@@ -16,6 +16,14 @@ const TokenSchema = z.object({
   refreshToken: z.string(),
 })
 
+const refreshTokenSchema = z.object({
+  token: z.string(),
+  userId: z.number(),
+  deviceId: z.number(),
+  createdAt: z.date(),
+  expiresAt: z.date(),
+})
+
 /*
   1. Strict: Kiểm tra tất cả các trường được định nghĩa trong schema.
   Nếu có trường nào không khớp với schema, sẽ ném ra lỗi.
@@ -60,21 +68,53 @@ export const SendOTPBodySchema = VerificationCodeSchema.pick({
     }
   })
 
-export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>
-
-export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
-
 export const RegisterResSchema = UserSchema.omit({
   password: true,
   totpSecret: true,
 })
 
-export type RegisterResType = z.infer<typeof RegisterResSchema>
-
 export const LoginBodySchema = UserSchema.pick({
   email: true,
   password: true,
+}).strict()
+
+export const RefreshTokenBodySchema = TokenSchema.pick({
+  refreshToken: true,
 })
+
+export const LogoutBodySchema = TokenSchema.pick({
+  refreshToken: true,
+})
+
+export const DeviceSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  userAgent: z.string(),
+  ip: z.string(),
+  lastActiveAt: z.date(),
+  isActive: z.boolean(),
+  createdAt: z.date(),
+})
+
+export type DeviceType = z.infer<typeof DeviceSchema>
+
+export const RoleSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  isActive: z.boolean(),
+  createdById: z.number().nullable(),
+  updatedById: z.number().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  deletedAt: z.date().nullable(),
+})
+
+export type RoleType = z.infer<typeof RoleSchema>
+
+export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
+
+export type VerificationCodeType = z.infer<typeof VerificationCodeSchema>
 
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
 
@@ -82,16 +122,12 @@ export const TokenResSchema = TokenSchema
 
 export type TokenResType = z.infer<typeof TokenResSchema>
 
-export const RefreshTokenBodySchema = TokenSchema.pick({
-  refreshToken: true,
-})
+export type RegisterResType = z.infer<typeof RegisterResSchema>
 
 export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBodySchema>
 
-export const LogoutBodySchema = TokenSchema.pick({
-  refreshToken: true,
-})
+export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>
 
-export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
+export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 
-export type VerificationCodeType = z.infer<typeof VerificationCodeSchema>
+export type RefreshTokenType = z.infer<typeof refreshTokenSchema>

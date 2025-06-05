@@ -139,12 +139,11 @@ model VerificationCode {
 }
 
 model Device {
-  id           Int       @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   userId       Int
-  deviceId     String
-  createdAt    DateTime  @default(now())
-  isActive     Boolean   @default(true)
-  lastActiveAt DateTime?
+  createdAt    DateTime @default(now())
+  isActive     Boolean  @default(true)
+  lastActiveAt DateTime @updatedAt
   userAgent    String
   ip           String
 
