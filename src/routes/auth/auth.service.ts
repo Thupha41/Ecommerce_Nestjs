@@ -15,13 +15,14 @@ import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.
 import { addMilliseconds } from 'date-fns'
 import ms from 'ms'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
-
+import { EmailService } from 'src/shared/services/email.service'
 @Injectable()
 export class AuthService {
   constructor(
     private readonly hashingService: HashingService,
     private readonly tokenService: TokenService,
     private readonly roleService: RolesService,
+    private readonly emailService: EmailService,
     @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
     @Inject('ISharedUserRepository') private readonly sharedUserRepository: ISharedUserRepository,
   ) {}
@@ -189,6 +190,16 @@ export class AuthService {
       type,
       expiresAt: addMilliseconds(new Date(), ms('5m')),
     })
+
+    //3. Send OTP to email
+    const { error } = await this.emailService.sendOTPCodeEmail({ email, code: otp })
+
+    if (error) {
+      throw new UnprocessableEntityException({
+        message: 'Send OTP failed',
+        path: 'code',
+      })
+    }
 
     return {
       message: 'OTP sent successfully',
