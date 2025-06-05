@@ -5,6 +5,7 @@ import {
   RefreshTokenBodySchema,
   TokenResSchema,
   RegisterResSchema,
+  SendOTPBodySchema,
 } from './auth.model'
 import { RegisterBodySchema } from './auth.model'
 
@@ -14,3 +15,4 @@ export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
 export class TokenResDTO extends createZodDto(TokenResSchema) {}
 export class RefreshTokenBodyDTO extends createZodDto(RefreshTokenBodySchema) {}
 export class LogoutBodyDTO extends createZodDto(LogoutBodySchema) {}
+export class SendOTPBodyDTO extends createZodDto(SendOTPBodySchema) {}
