@@ -171,7 +171,7 @@ export class AuthService {
       })
 
       //4. xóa refresh token cũ
-      const $deleteRefreshToken = this.authRepository.deleteRefreshToken({ token: refreshToken })
+      const $deleteRefreshToken = await this.authRepository.deleteRefreshToken({ token: refreshToken })
 
       //4. tạo token mới
       const $tokens = this.generateTokens({
@@ -195,16 +195,23 @@ export class AuthService {
 
   async logout(body: LogoutBodyType) {
     try {
-      //verify refresh token
+      //1. verify refresh token
       await this.tokenService.verifyRefreshToken(body.refreshToken)
 
-      //check refresh token exist
+      //2. check refresh token exist
       const checkRefreshTokenExist = await this.authRepository.findRefreshToken(body.refreshToken)
       if (!checkRefreshTokenExist) {
         throw new UnauthorizedException('Refresh token not found')
       }
-      //xóa refresh token cũ
-      await this.authRepository.deleteRefreshToken({ token: body.refreshToken })
+      //3. xóa refresh token cũ
+      const $deleteRefreshToken = await this.authRepository.deleteRefreshToken({ token: body.refreshToken })
+
+      //4. Cập nhật device là đã logout
+      if ($deleteRefreshToken && $deleteRefreshToken.deviceId) {
+        await this.authRepository.updateDevice($deleteRefreshToken.deviceId, {
+          isActive: false,
+        })
+      }
 
       return {
         message: 'Logout successfully',
