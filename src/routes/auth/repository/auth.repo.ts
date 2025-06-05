@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/shared/services/prisma.service'
-import { DeviceType, RegisterBodyType, RoleType, VerificationCodeType } from '../auth.model'
+import { DeviceType, RefreshTokenType, RegisterBodyType, RoleType, VerificationCodeType } from '../auth.model'
 import { IAuthRepository } from './auth.repo.interface'
 import { UserType } from 'src/shared/models/shared-user.model'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
@@ -39,9 +39,9 @@ export class AuthRepository implements IAuthRepository {
     return refreshToken ? { userId: refreshToken.userId, expiresAt: refreshToken.expiresAt } : null
   }
 
-  async deleteRefreshToken(token: string): Promise<void> {
-    await this.prismaService.refreshToken.delete({
-      where: { token },
+  async deleteRefreshToken(uniqueObject: { token: string }): Promise<RefreshTokenType | null> {
+    return await this.prismaService.refreshToken.delete({
+      where: uniqueObject,
     })
   }
 
@@ -70,7 +70,13 @@ export class AuthRepository implements IAuthRepository {
     payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActiveAt' | 'isActive'>>,
   ): Promise<DeviceType> {
     const device = await this.prismaService.device.create({
-      data: payload,
+      data: {
+        userId: payload.userId,
+        userAgent: payload.userAgent,
+        ip: payload.ip,
+        lastActiveAt: payload.lastActiveAt ?? new Date(),
+        isActive: payload.isActive,
+      },
     })
 
     return device as DeviceType
@@ -83,6 +89,33 @@ export class AuthRepository implements IAuthRepository {
       where: uniqueObject,
       include: {
         role: true,
+      },
+    })
+  }
+
+  async findUniqueRefreshTokenIncludeUserRole(uniqueObject: {
+    token: string
+  }): Promise<(RefreshTokenType & { user: UserType & { role: RoleType } }) | null> {
+    return await this.prismaService.refreshToken.findUnique({
+      where: uniqueObject,
+      include: {
+        user: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    })
+  }
+
+  async updateDevice(deviceId: number, payload: Partial<DeviceType>): Promise<DeviceType | null> {
+    const updateData = payload
+
+    return await this.prismaService.device.update({
+      where: { id: deviceId },
+      data: {
+        ...updateData,
+        lastActiveAt: payload.lastActiveAt ?? undefined,
       },
     })
   }
