@@ -7,8 +7,8 @@ import {
   RegisterResSchema,
   SendOTPBodySchema,
   GoogleAuthUrlResSchema,
-} from './auth.model'
-import { RegisterBodySchema } from './auth.model'
+} from './models/auth.model'
+import { RegisterBodySchema } from './models/auth.model'
 
 export class RegisterBodyDTO extends createZodDto(RegisterBodySchema) {}
 export class RegisterResDTO extends createZodDto(RegisterResSchema) {}

@@ -1,13 +1,14 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { google } from 'googleapis'
 import envConfig from 'src/shared/config'
 import { OAuth2Client } from 'google-auth-library'
-import { GoogleAuthStateType } from './auth.model'
+import { GoogleAuthStateType } from './models/auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { RolesService } from './role.service'
 import { v4 as uuidv4 } from 'uuid'
 import { AuthService } from './auth.service'
+import { InvalidEmailException } from './models/error.model'
 @Injectable()
 export class GoogleService {
   private oauth2Client: OAuth2Client
@@ -50,7 +51,7 @@ export class GoogleService {
     picture?: string | null
   }) {
     if (!userInfo.email) {
-      throw new BadRequestException('Invalid email from Google')
+      throw InvalidEmailException
     }
 
     let user = await this.authRepository.findUserUniqueUserIncludeRole({ email: userInfo.email })
@@ -96,7 +97,7 @@ export class GoogleService {
     //2. Get user info
     const userInfo = await this.getGoogleUserInfo()
     if (!userInfo.email) {
-      throw new BadRequestException('Invalid email')
+      throw InvalidEmailException
     }
 
     //3. Find or create user

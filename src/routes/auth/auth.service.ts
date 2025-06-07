@@ -1,15 +1,9 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-  UnprocessableEntityException,
-} from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintError, isNotFoundError, generateOTP } from 'src/shared/helpers'
 import { RolesService } from './role.service'
-import { RefreshTokenBodyType, LogoutBodyType, RegisterBodyType, SendOTPBodyType } from './auth.model'
+import { RefreshTokenBodyType, LogoutBodyType, RegisterBodyType, SendOTPBodyType } from './models/auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
 import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
 import { addMilliseconds } from 'date-fns'
@@ -17,6 +11,17 @@ import ms from 'ms'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
 import { EmailService } from 'src/shared/services/email.service'
 import { IAccessTokenPayloadCreate } from 'src/shared/types/jwt.types'
+import {
+  EmailAlreadyExistsException,
+  EmailNotFoundException,
+  FailedToCreateDeviceException,
+  FailedToSendOTPException,
+  InvalidOTPException,
+  OTPExpiredException,
+  PasswordIncorrectException,
+  RefreshTokenAlreadyUsedException,
+  RefreshTokenNotFoundException,
+} from './models/error.model'
 @Injectable()
 export class AuthService {
   constructor(
@@ -37,20 +42,10 @@ export class AuthService {
       })
 
       if (!verificationCode) {
-        throw new UnprocessableEntityException([
-          {
-            field: 'code',
-            error: 'Invalid verification code',
-          },
-        ])
+        throw InvalidOTPException
       }
       if (verificationCode.expiresAt < new Date()) {
-        throw new UnprocessableEntityException([
-          {
-            field: 'code',
-            error: 'Verification code has expired',
-          },
-        ])
+        throw OTPExpiredException
       }
       const clientRoleId = await this.roleService.getClientRoleId()
       const hashingPassword = await this.hashingService.hash(body.password)
@@ -66,12 +61,7 @@ export class AuthService {
       console.log('>>> check register error', error)
       if (isUniqueConstraintError(error)) {
         if (error.meta?.target instanceof Array && error.meta.target[0] === 'email') {
-          throw new ConflictException([
-            {
-              message: 'Email already exists',
-              path: 'email',
-            },
-          ])
+          throw EmailAlreadyExistsException
         }
       }
       throw error
@@ -85,7 +75,7 @@ export class AuthService {
     })
 
     if (!device) {
-      throw new Error('Failed to create device')
+      throw FailedToCreateDeviceException
     }
 
     return this.generateTokens({
@@ -99,18 +89,13 @@ export class AuthService {
     //1> check email exist in db
     const checkEmailExist = await this.authRepository.findUserUniqueUserIncludeRole({ email: body.email })
     if (!checkEmailExist) {
-      throw new UnauthorizedException('Email not found')
+      throw EmailNotFoundException
     }
 
     //2 > check password is match in db
     const isPassMatch = await this.hashingService.compare(body.password, checkEmailExist.password)
     if (!isPassMatch) {
-      throw new UnprocessableEntityException([
-        {
-          field: 'password',
-          error: 'Password is incorrect',
-        },
-      ])
+      throw PasswordIncorrectException
     }
 
     return this.createDeviceAndTokens(
@@ -160,7 +145,7 @@ export class AuthService {
         token: refreshToken,
       })
       if (!checkRefreshTokenExist) {
-        throw new UnauthorizedException('Refresh token has been revoked')
+        throw RefreshTokenAlreadyUsedException
       }
 
       //3. Cập nhật device
@@ -191,9 +176,9 @@ export class AuthService {
     } catch (error) {
       console.log('>>> check refresh token error', error)
       if (isNotFoundError(error)) {
-        throw new UnauthorizedException('Refresh has been revoked')
+        throw RefreshTokenAlreadyUsedException
       }
-      throw new UnauthorizedException('Refresh token not found')
+      throw RefreshTokenAlreadyUsedException
     }
   }
 
@@ -205,7 +190,7 @@ export class AuthService {
       //2. check refresh token exist
       const checkRefreshTokenExist = await this.authRepository.findRefreshToken(body.refreshToken)
       if (!checkRefreshTokenExist) {
-        throw new UnauthorizedException('Refresh token not found')
+        throw RefreshTokenNotFoundException
       }
       //3. xóa refresh token cũ
       const $deleteRefreshToken = await this.authRepository.deleteRefreshToken({ token: body.refreshToken })
@@ -223,9 +208,9 @@ export class AuthService {
     } catch (error) {
       console.log('>>> check refresh token error', error)
       if (isNotFoundError(error)) {
-        throw new UnauthorizedException('Refresh has been revoked')
+        throw RefreshTokenAlreadyUsedException
       }
-      throw new UnauthorizedException('Refresh token not found')
+      throw RefreshTokenNotFoundException
     }
   }
 
@@ -234,12 +219,7 @@ export class AuthService {
     //1. check email exist
     const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email })
     if (checkEmailExist) {
-      throw new ConflictException([
-        {
-          message: 'Email already exists',
-          path: 'email',
-        },
-      ])
+      throw EmailAlreadyExistsException
     }
 
     //2. Generate OTP
@@ -255,10 +235,7 @@ export class AuthService {
     const { error } = await this.emailService.sendOTPCodeEmail({ email, code: otp })
 
     if (error) {
-      throw new UnprocessableEntityException({
-        message: 'Send OTP failed',
-        path: 'code',
-      })
+      throw FailedToSendOTPException
     }
 
     return {

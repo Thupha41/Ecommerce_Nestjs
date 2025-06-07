@@ -1,8 +1,8 @@
-import { RegisterBodyType, DeviceType, RoleType } from '../auth.model'
+import { RegisterBodyType, DeviceType, RoleType } from '../models/auth.model'
 import { UserType } from 'src/shared/models/shared-user.model'
-import { VerificationCodeType } from '../auth.model'
+import { VerificationCodeType } from '../models/auth.model'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
-import { RefreshTokenType } from '../auth.model'
+import { RefreshTokenType } from '../models/auth.model'
 export interface IAuthRepository {
   createUser(
     user: Omit<RegisterBodyType, 'confirmPassword' | 'code'> & Pick<UserType, 'roleId'>,

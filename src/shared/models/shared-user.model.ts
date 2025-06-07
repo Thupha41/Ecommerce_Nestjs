@@ -3,14 +3,14 @@ import { UserStatus } from '../constants/auth.constants'
 
 export const UserSchema = z.object({
   id: z.number(),
-  email: z.string().email(),
-  name: z.string().min(1).max(100),
-  password: z.string().min(8).max(100),
+  email: z.string({ message: 'Error.InvalidEmail' }).email({ message: 'Error.InvalidEmail' }),
+  name: z.string().min(1, { message: 'Error.InvalidName' }).max(100, { message: 'Error.InvalidName' }),
+  password: z.string().min(8, { message: 'Error.InvalidPassword' }).max(100, { message: 'Error.InvalidPassword' }),
   phoneNumber: z
     .string()
-    .min(10, { message: 'Phone number must be at least 10 digits' })
-    .max(11, { message: 'Phone number must not exceed 11 digits' })
-    .regex(/^(0|\+84)\d{9,10}$/, { message: 'Invalid phone number format' }),
+    .min(10, { message: 'Error.InvalidPhoneNumber' })
+    .max(11, { message: 'Error.InvalidPhoneNumber' })
+    .regex(/^(0|\+84)\d{9,10}$/, { message: 'Error.InvalidPhoneNumber' }),
   avatar: z.string().nullable(),
   totpSecret: z.string().nullable(),
   status: z.enum([UserStatus.ACTIVE, UserStatus.BLOCKED, UserStatus.INACTIVE]),
