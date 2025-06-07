@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common'
+import { Controller, Post, Body, HttpCode, HttpStatus, Ip, Get } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { UseGuards } from '@nestjs/common'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
@@ -11,13 +11,18 @@ import {
   RegisterResDTO,
   SendOTPBodyDTO,
   TokenResDTO,
+  GoogleAuthUrlResDTO,
 } from './auth.dto'
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
+import { GoogleService } from './google.service'
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly googleService: GoogleService,
+  ) {}
 
   /*
     Khi endpoint POST /register được gọi, decorator @SerializeOptions({ type: RegisterResDTO }) 
@@ -58,5 +63,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async sendOTP(@Body() body: SendOTPBodyDTO) {
     return await this.authService.sendOTP(body)
+  }
+
+  @Get('google-link')
+  @IsPublic()
+  @ZodSerializerDto(GoogleAuthUrlResDTO)
+  getAuthorizationUrl(@UserAgent() userAgent: string, @Ip() ip: string) {
+    return this.googleService.getAuthorizationUrl({ userAgent, ip })
   }
 }

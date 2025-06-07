@@ -110,6 +110,15 @@ export const RoleSchema = z.object({
   deletedAt: z.date().nullable(),
 })
 
+export const GoogleAuthStateSchema = DeviceSchema.pick({
+  userAgent: true,
+  ip: true,
+})
+
+export const GoogleAuthUrlResSchema = z.object({
+  url: z.string(),
+})
+
 export type RoleType = z.infer<typeof RoleSchema>
 
 export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
@@ -131,3 +140,7 @@ export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 
 export type RefreshTokenType = z.infer<typeof refreshTokenSchema>
+
+export type GoogleAuthStateType = z.infer<typeof GoogleAuthStateSchema>
+
+export type GoogleAuthUrlResType = z.infer<typeof GoogleAuthUrlResSchema>
