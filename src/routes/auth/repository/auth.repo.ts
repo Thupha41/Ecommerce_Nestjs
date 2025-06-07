@@ -21,6 +21,17 @@ export class AuthRepository implements IAuthRepository {
     })
   }
 
+  async createUserIncludeRole(
+    user: Pick<UserType, 'name' | 'email' | 'password' | 'phoneNumber' | 'roleId' | 'avatar'>,
+  ): Promise<UserType & { role: RoleType }> {
+    return await this.prismaService.user.create({
+      data: user,
+      include: {
+        role: true,
+      },
+    })
+  }
+
   async createRefreshToken(token: string, userId: number, expiresAt: Date, deviceId: number): Promise<void> {
     await this.prismaService.refreshToken.create({
       data: {

@@ -77,7 +77,24 @@ export class AuthService {
       throw error
     }
   }
+  async createDeviceAndTokens(userId: number, roleId: number, roleName: string, userAgent: string, ip: string) {
+    const device = await this.authRepository.createDevice({
+      userId,
+      userAgent,
+      ip,
+    })
 
+    if (!device) {
+      throw new Error('Failed to create device')
+    }
+
+    return this.generateTokens({
+      userId,
+      deviceId: device.id,
+      roleId,
+      roleName,
+    })
+  }
   async login(body: any) {
     //1> check email exist in db
     const checkEmailExist = await this.authRepository.findUserUniqueUserIncludeRole({ email: body.email })
@@ -96,26 +113,13 @@ export class AuthService {
       ])
     }
 
-    //3> Create Device
-    const device = await this.authRepository.createDevice({
-      userId: checkEmailExist.id,
-      userAgent: body.userAgent,
-      ip: body.ip,
-    })
-
-    if (!device) {
-      throw new Error('Failed to create device')
-    }
-
-    //4> Create token
-    const token = await this.generateTokens({
-      userId: checkEmailExist.id,
-      deviceId: device.id,
-      roleId: checkEmailExist.roleId,
-      roleName: checkEmailExist.role.name,
-    })
-
-    return token
+    return this.createDeviceAndTokens(
+      checkEmailExist.id,
+      checkEmailExist.roleId,
+      checkEmailExist.role.name,
+      body.userAgent,
+      body.ip,
+    )
   }
 
   async generateTokens(payload: IAccessTokenPayloadCreate) {

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Ip, Get } from '@nestjs/common'
+import { Controller, Post, Body, HttpCode, HttpStatus, Ip, Get, Query, Res } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { UseGuards } from '@nestjs/common'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
@@ -17,6 +17,9 @@ import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { GoogleService } from './google.service'
+import envConfig from 'src/shared/config'
+import { Response } from 'express'
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -70,5 +73,21 @@ export class AuthController {
   @ZodSerializerDto(GoogleAuthUrlResDTO)
   getAuthorizationUrl(@UserAgent() userAgent: string, @Ip() ip: string) {
     return this.googleService.getAuthorizationUrl({ userAgent, ip })
+  }
+
+  @Get('google/callback')
+  @IsPublic()
+  @ZodSerializerDto(GoogleAuthUrlResDTO)
+  async googleCallBack(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    try {
+      const data = await this.googleService.googleCallBack({ code, state })
+      return res.redirect(
+        `${envConfig.GOOGLE_REDIRECT_URI}?accessToken=${data.accessToken}&refreshToken=${data.refreshToken}`,
+      )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to login with google'
+      console.error('Error in googleCallBack', error)
+      return res.redirect(`${envConfig.GOOGLE_REDIRECT_URI}?errorMessage=${message}`)
+    }
   }
 }
