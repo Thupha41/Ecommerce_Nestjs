@@ -3,7 +3,13 @@ import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintError, isNotFoundError, generateOTP } from 'src/shared/helpers'
 import { RolesService } from './role.service'
-import { RefreshTokenBodyType, LogoutBodyType, RegisterBodyType, SendOTPBodyType } from './models/auth.model'
+import {
+  RefreshTokenBodyType,
+  LogoutBodyType,
+  RegisterBodyType,
+  SendOTPBodyType,
+  ForgotPasswordBodyType,
+} from './models/auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
 import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
 import { addMilliseconds } from 'date-fns'
@@ -35,28 +41,37 @@ export class AuthService {
 
   async register(body: RegisterBodyType) {
     try {
-      const verificationCode = await this.authRepository.findUniqueVerificationCode({
-        email: body.email,
-        type: TypeOfVerificationCode.REGISTER,
-        code: body.code,
-      })
+      //1. validate verification code
+      await this.validateVerificationCode(body.email, body.code, TypeOfVerificationCode.REGISTER)
 
-      if (!verificationCode) {
-        throw InvalidOTPException
+      //2. check email already exists
+      const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email: body.email })
+      if (checkEmailExist) {
+        throw EmailAlreadyExistsException
       }
-      if (verificationCode.expiresAt < new Date()) {
-        throw OTPExpiredException
-      }
+      //3. Get client role id
       const clientRoleId = await this.roleService.getClientRoleId()
+
+      //4. hash password
       const hashingPassword = await this.hashingService.hash(body.password)
 
-      return await this.authRepository.createUser({
-        name: body.name,
-        email: body.email,
-        password: hashingPassword,
-        phoneNumber: body.phoneNumber,
-        roleId: clientRoleId,
-      })
+      //5. create user and delete OTP code
+      const [user] = await Promise.all([
+        this.authRepository.createUser({
+          name: body.name,
+          email: body.email,
+          password: hashingPassword,
+          phoneNumber: body.phoneNumber,
+          roleId: clientRoleId,
+        }),
+        this.authRepository.deleteVerificationCode({
+          email: body.email,
+          type: TypeOfVerificationCode.REGISTER,
+          code: body.code,
+        }),
+      ])
+
+      return user
     } catch (error) {
       console.log('>>> check register error', error)
       if (isUniqueConstraintError(error)) {
@@ -65,6 +80,20 @@ export class AuthService {
         }
       }
       throw error
+    }
+  }
+
+  async validateVerificationCode(email: string, code: string, type: TypeOfVerificationCode) {
+    const checkCodeExist = await this.authRepository.findUniqueVerificationCode({
+      email,
+      code,
+      type,
+    })
+    if (!checkCodeExist) {
+      throw InvalidOTPException
+    }
+    if (checkCodeExist.expiresAt < new Date()) {
+      throw OTPExpiredException
     }
   }
   async createDeviceAndTokens(userId: number, roleId: number, roleName: string, userAgent: string, ip: string) {
@@ -218,10 +247,12 @@ export class AuthService {
     const { email, type } = body
     //1. check email exist
     const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email })
-    if (checkEmailExist) {
+    if (checkEmailExist && type === TypeOfVerificationCode.REGISTER) {
       throw EmailAlreadyExistsException
     }
-
+    if (checkEmailExist && type === TypeOfVerificationCode.FORGOT_PASSWORD) {
+      throw EmailNotFoundException
+    }
     //2. Generate OTP
     const otp = generateOTP(6)
     const verificationCode = await this.authRepository.createVerificationCode({
@@ -241,6 +272,36 @@ export class AuthService {
     return {
       message: 'OTP sent successfully',
       verificationCode,
+    }
+  }
+
+  async forgotPassword(body: ForgotPasswordBodyType) {
+    const { email, code, newPassword } = body
+
+    //1. check email exist
+    const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email })
+    if (!checkEmailExist) {
+      throw EmailNotFoundException
+    }
+
+    //2. validate verification code
+    await this.validateVerificationCode(email, code, TypeOfVerificationCode.FORGOT_PASSWORD)
+
+    //3. hasing new password
+    const hashingPassword = await this.hashingService.hash(newPassword)
+
+    //4. update new password and delete OTP code
+    await Promise.all([
+      this.authRepository.updateUser({ id: checkEmailExist.id }, { password: hashingPassword }),
+      this.authRepository.deleteVerificationCode({
+        email,
+        type: TypeOfVerificationCode.FORGOT_PASSWORD,
+        code,
+      }),
+    ])
+
+    return {
+      message: 'Password updated successfully',
     }
   }
 }

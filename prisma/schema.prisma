@@ -472,6 +472,7 @@ enum VerificationCodeType {
 enum UserStatus {
   ACTIVE
   BLOCKED
+  INACTIVE
 }
 
 enum HTTPMethod {

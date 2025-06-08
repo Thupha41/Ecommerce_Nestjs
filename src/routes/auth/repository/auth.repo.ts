@@ -130,4 +130,22 @@ export class AuthRepository implements IAuthRepository {
       },
     })
   }
+
+  async updateUser(
+    where: { id: number } | { email: string },
+    data: Partial<Omit<UserType, 'id'>>,
+  ): Promise<UserType | null> {
+    return await this.prismaService.user.update({
+      where,
+      data,
+    })
+  }
+
+  async deleteVerificationCode(
+    where: { email: string } | { id: number } | { email: string; type: TypeOfVerificationCode; code: string },
+  ): Promise<VerificationCodeType | null> {
+    return await this.prismaService.verificationCode.delete({
+      where,
+    })
+  }
 }

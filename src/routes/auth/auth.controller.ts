@@ -12,6 +12,7 @@ import {
   SendOTPBodyDTO,
   TokenResDTO,
   GoogleAuthUrlResDTO,
+  ForgotPasswordBodyDTO,
 } from './auth.dto'
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
@@ -89,5 +90,12 @@ export class AuthController {
       console.error('Error in googleCallBack', error)
       return res.redirect(`${envConfig.GOOGLE_REDIRECT_URI}?errorMessage=${message}`)
     }
+  }
+
+  @Post('forgot-password')
+  @IsPublic()
+  @ZodSerializerDto(MessageResDTO)
+  async forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
+    return await this.authService.forgotPassword(body)
   }
 }

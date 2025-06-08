@@ -30,4 +30,10 @@ export interface IAuthRepository {
   }): Promise<(RefreshTokenType & { user: UserType & { role: RoleType } }) | null>
 
   updateDevice(deviceId: number, payload: Partial<DeviceType>): Promise<DeviceType | null>
+
+  updateUser(where: { id: number } | { email: string }, data: Partial<Omit<UserType, 'id'>>): Promise<UserType | null>
+
+  deleteVerificationCode(
+    where: { email: string } | { id: number } | { email: string; code: string; type: TypeOfVerificationCode },
+  ): Promise<VerificationCodeType | null>
 }

@@ -42,8 +42,8 @@ export const RegisterBodySchema = UserSchema.pick({
   .extend({
     confirmPassword: z
       .string()
-      .min(8, { message: 'Confirm password must be at least 8 characters' })
-      .max(100, { message: 'Confirm password is too long' }),
+      .min(8, { message: 'Error.PasswordMinLength' })
+      .max(100, { message: 'Error.PasswordMaxLength' }),
     code: z.string().length(6),
   })
   .strict()
@@ -51,7 +51,7 @@ export const RegisterBodySchema = UserSchema.pick({
     if (confirmPassword !== password) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Password and confirm password do not match',
+        message: 'Error.PasswordNotMatch',
         path: ['confirmPassword'],
       })
     }
@@ -64,7 +64,7 @@ export const SendOTPBodySchema = VerificationCodeSchema.pick({
   .strict()
   .superRefine(({ type }, ctx) => {
     if (type !== TypeOfVerificationCode.REGISTER && type !== TypeOfVerificationCode.FORGOT_PASSWORD) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid verification code type', path: ['type'] })
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Error.InvalidVerificationCodeType', path: ['type'] })
     }
   })
 
@@ -119,6 +119,26 @@ export const GoogleAuthUrlResSchema = z.object({
   url: z.string(),
 })
 
+export const ForgotPasswordBodySchema = z
+  .object({
+    email: z.string().email(),
+    code: z.string().length(6),
+    newPassword: z
+      .string()
+      .min(8, { message: 'Error.PasswordMinLength' })
+      .max(100, { message: 'Error.PasswordMaxLength' }),
+    confirmNewPassword: z
+      .string()
+      .min(8, { message: 'Error.PasswordMinLength' })
+      .max(100, { message: 'Error.PasswordMaxLength' }),
+  })
+  .strict()
+  .superRefine(({ newPassword, confirmNewPassword }, ctx) => {
+    if (newPassword !== confirmNewPassword) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Error.PasswordNotMatch', path: ['confirmNewPassword'] })
+    }
+  })
+
 export type RoleType = z.infer<typeof RoleSchema>
 
 export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
@@ -144,3 +164,5 @@ export type RefreshTokenType = z.infer<typeof refreshTokenSchema>
 export type GoogleAuthStateType = z.infer<typeof GoogleAuthStateSchema>
 
 export type GoogleAuthUrlResType = z.infer<typeof GoogleAuthUrlResSchema>
+
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>
