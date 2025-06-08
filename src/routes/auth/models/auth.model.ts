@@ -84,7 +84,7 @@ export const LoginBodySchema = UserSchema.pick({
 })
   .extend({
     totpCode: z.string().length(6).optional(), //2FA code
-    code: z.string().length(6), //Email OTP code
+    code: z.string().length(6).optional(), //Email OTP code
   })
   .strict()
 
@@ -173,7 +173,7 @@ export const Disable2FABodySchema = z
 
 export const TwoFactorSetupResSchema = z.object({
   secret: z.string(),
-  url: z.string(),
+  uri: z.string(),
 })
 
 export type TwoFactorSetupResType = z.infer<typeof TwoFactorSetupResSchema>

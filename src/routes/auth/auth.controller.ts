@@ -13,6 +13,7 @@ import {
   TokenResDTO,
   GoogleAuthUrlResDTO,
   ForgotPasswordBodyDTO,
+  TwoFactorSetupResDTO,
 } from './auth.dto'
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
@@ -20,6 +21,8 @@ import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { GoogleService } from './google.service'
 import envConfig from 'src/shared/config'
 import { Response } from 'express'
+import { EmptyBodyDTO } from 'src/shared/dtos/request.dto'
+import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 
 @Controller('auth')
 export class AuthController {
@@ -97,5 +100,12 @@ export class AuthController {
   @ZodSerializerDto(MessageResDTO)
   async forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
     return await this.authService.forgotPassword(body)
+  }
+
+  @Post('2fa/setup')
+  @UseGuards(AccessTokenGuard)
+  @ZodSerializerDto(TwoFactorSetupResDTO)
+  async setup2FA(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
+    return await this.authService.setup2FA(userId)
   }
 }

@@ -9,6 +9,7 @@ import {
   RegisterBodyType,
   SendOTPBodyType,
   ForgotPasswordBodyType,
+  LoginBodyType,
 } from './models/auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
 import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
@@ -27,7 +28,12 @@ import {
   PasswordIncorrectException,
   RefreshTokenAlreadyUsedException,
   RefreshTokenNotFoundException,
+  TOTPAlreadyEnabledException,
+  UserNotFoundException,
+  InvalidTOTPAndCodeException,
+  InvalidTOTPException,
 } from './models/error.model'
+import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 @Injectable()
 export class AuthService {
   constructor(
@@ -35,6 +41,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly roleService: RolesService,
     private readonly emailService: EmailService,
+    private readonly twoFactorAuthService: TwoFactorAuthService,
     @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
     @Inject('ISharedUserRepository') private readonly sharedUserRepository: ISharedUserRepository,
   ) {}
@@ -116,7 +123,7 @@ export class AuthService {
       roleName,
     })
   }
-  async login(body: any) {
+  async login(body: LoginBodyType & { userAgent: string; ip: string }) {
     //1> check email exist in db
     const checkEmailExist = await this.authRepository.findUserUniqueUserIncludeRole({ email: body.email })
     if (!checkEmailExist) {
@@ -129,6 +136,32 @@ export class AuthService {
       throw PasswordIncorrectException
     }
 
+    //3. Nếu user đã bật mã 2FA thì kiểm tra mã 2FA hoặc mã OTP (email)
+    if (checkEmailExist.totpSecret) {
+      //Nếu không có mã 2FA hoặc mã OTP (email) thì throw lỗi
+      if (!body.totpCode && !body.code) {
+        throw InvalidTOTPAndCodeException
+      }
+
+      //Kiểm tra tính hợp lệ của mã 2FA hoặc mã OTP (email)
+      if (body.totpCode) {
+        const isVerifyTOTP = this.twoFactorAuthService.isVerifyTOTP({
+          email: checkEmailExist.email,
+          code: body.totpCode,
+          secret: checkEmailExist.totpSecret,
+        })
+        if (!isVerifyTOTP) {
+          throw InvalidTOTPException
+        }
+      } else if (body.code) {
+        //Nếu có mã OTP (email) thì kiểm tra tính hợp lệ của mã OTP (email)
+        await this.validateVerificationCode(checkEmailExist.email, body.code, TypeOfVerificationCode.LOGIN)
+      } else {
+        throw InvalidTOTPAndCodeException
+      }
+    }
+
+    //4. Tạo device và tokens
     return this.createDeviceAndTokens(
       checkEmailExist.id,
       checkEmailExist.roleId,
@@ -305,6 +338,27 @@ export class AuthService {
 
     return {
       message: 'Password updated successfully',
+    }
+  }
+
+  async setup2FA(userId: number) {
+    //1. Kiểm tra xem user có tồn tại hay không? Và xem đã bật 2FA chưa
+    const checkUserExist = await this.sharedUserRepository.findUserUnique({ id: userId })
+    if (!checkUserExist) {
+      throw UserNotFoundException
+    }
+    if (checkUserExist.totpSecret) {
+      throw TOTPAlreadyEnabledException
+    }
+    //2. Tạo secret và url cho 2FA
+    const { secret, uri } = this.twoFactorAuthService.generateTOTPSecret(checkUserExist.email)
+    //3. Cập nhật secret vào user trong db
+    await this.authRepository.updateUser({ id: userId }, { totpSecret: secret })
+    //4. Trả về secret và url cho client
+
+    return {
+      secret,
+      uri: uri,
     }
   }
 }

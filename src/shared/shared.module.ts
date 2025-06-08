@@ -8,12 +8,14 @@ import { ApiKeyGuard } from './guards/api-key.guard'
 import { AuthenticationGuard } from './guards/authentication.guard'
 import { SharedUserRepository } from './repositories/shared-user.repo'
 import { EmailService } from './services/email.service'
+import { TwoFactorAuthService } from './services/2fa.service'
 
 const sharedService = [
   PrismaService,
   HashingService,
   TokenService,
   EmailService,
+  TwoFactorAuthService,
   AccessTokenGuard,
   ApiKeyGuard,
   AuthenticationGuard,

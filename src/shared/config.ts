@@ -47,6 +47,8 @@ const configSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string(),
   GOOGLE_APP_EMAIL: z.string(),
   GOOGLE_APP_PASSWORD: z.string(),
+
+  APP_NAME: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)
