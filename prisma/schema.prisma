@@ -178,6 +178,8 @@ model Permission {
   createdBy   User?      @relation("PermissionCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?      @relation("PermissionUpdatedBy", fields: [updatedById], references: [id])
   roles       Role[]
+
+  @@index([deletedAt])
 }
 
 model Role {
