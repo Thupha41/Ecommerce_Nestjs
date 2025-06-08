@@ -87,9 +87,14 @@ export const LoginBodySchema = UserSchema.pick({
     code: z.string().length(6).optional(), //Email OTP code
   })
   .strict()
-  .superRefine(({ totpCode, code }, ctx) => {
-    const message = 'Error.JustOneOfTwoFields'
-    if ((totpCode !== undefined) === (code !== undefined)) {
+  .superRefine((data, ctx) => {
+    // Logic này chỉ áp dụng khi server xác minh user có bật 2FA
+    // Việc kiểm tra sẽ được xử lý ở service layer dựa trên dữ liệu người dùng
+    // trong database, nên không cần kiểm tra ở đây
+
+    // Nếu cả hai cùng được cung cấp, báo lỗi
+    if (data.totpCode && data.code) {
+      const message = 'Error.OnlyOneFieldRequired'
       ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: ['totpCode'] })
       ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: ['code'] })
     }

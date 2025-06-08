@@ -23,6 +23,7 @@ import envConfig from 'src/shared/config'
 import { Response } from 'express'
 import { EmptyBodyDTO } from 'src/shared/dtos/request.dto'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+import { ApiBearerAuth } from '@nestjs/swagger'
 
 @Controller('auth')
 export class AuthController {
@@ -54,6 +55,7 @@ export class AuthController {
   @UseGuards(AccessTokenGuard)
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(TokenResDTO)
+  @ApiBearerAuth()
   async refreshToken(@Body() body: RefreshTokenBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
     return await this.authService.refreshToken({ ...body, userAgent, ip })
   }
@@ -61,6 +63,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(AccessTokenGuard)
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
   async logout(@Body() body: LogoutBodyDTO) {
     return await this.authService.logout(body)
   }
@@ -104,6 +107,7 @@ export class AuthController {
 
   @Post('2fa/setup')
   @UseGuards(AccessTokenGuard)
+  @ApiBearerAuth()
   @ZodSerializerDto(TwoFactorSetupResDTO)
   async setup2FA(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
     return await this.authService.setup2FA(userId)
