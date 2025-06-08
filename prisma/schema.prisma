@@ -128,13 +128,13 @@ model UserTranslation {
 
 model VerificationCode {
   id        Int                  @id @default(autoincrement())
-  email     String               @unique @db.VarChar(255)
+  email     String               @db.VarChar(255)
   code      String               @db.VarChar(50)
   type      VerificationCodeType
   expiresAt DateTime
   createdAt DateTime             @default(now())
 
-  @@index([email, code, type])
+  @@unique([email, type])
   @@index([expiresAt])
 }
 
@@ -467,6 +467,8 @@ enum OrderStatus {
 enum VerificationCodeType {
   REGISTER
   FORGOT_PASSWORD
+  LOGIN
+  DISABLE_2FA
 }
 
 enum UserStatus {

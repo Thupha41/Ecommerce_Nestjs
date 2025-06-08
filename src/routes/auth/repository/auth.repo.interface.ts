@@ -14,10 +14,10 @@ export interface IAuthRepository {
   findRefreshToken(token: string): Promise<{ userId: number; expiresAt: Date } | null>
   deleteRefreshToken(uniqueObject: { token: string }): Promise<RefreshTokenType | null>
   createVerificationCode(
-    payload: Pick<VerificationCodeType, 'email' | 'code' | 'type' | 'expiresAt'>,
+    payload: Pick<VerificationCodeType, 'email' | 'type' | 'code' | 'expiresAt'>,
   ): Promise<VerificationCodeType>
   findUniqueVerificationCode(
-    uniqueValue: { email: string } | { id: number } | { email: string; type: TypeOfVerificationCode; code: string },
+    uniqueValue: { id: number } | { email_type: { email: string; type: TypeOfVerificationCode } },
   ): Promise<VerificationCodeType | null>
   createDevice(
     payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActiveAt' | 'isActive'>>,
@@ -34,6 +34,6 @@ export interface IAuthRepository {
   updateUser(where: { id: number } | { email: string }, data: Partial<Omit<UserType, 'id'>>): Promise<UserType | null>
 
   deleteVerificationCode(
-    where: { email: string } | { id: number } | { email: string; code: string; type: TypeOfVerificationCode },
+    where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCode } },
   ): Promise<VerificationCodeType | null>
 }

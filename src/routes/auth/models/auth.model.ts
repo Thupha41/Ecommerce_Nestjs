@@ -6,7 +6,12 @@ export const VerificationCodeSchema = z.object({
   id: z.number(),
   email: z.string().email(),
   code: z.string().length(6),
-  type: z.enum([TypeOfVerificationCode.REGISTER, TypeOfVerificationCode.FORGOT_PASSWORD]),
+  type: z.enum([
+    TypeOfVerificationCode.REGISTER,
+    TypeOfVerificationCode.FORGOT_PASSWORD,
+    TypeOfVerificationCode.LOGIN,
+    TypeOfVerificationCode.DISABLE_2FA,
+  ]),
   expiresAt: z.date(),
   createdAt: z.date(),
 })
@@ -76,7 +81,12 @@ export const RegisterResSchema = UserSchema.omit({
 export const LoginBodySchema = UserSchema.pick({
   email: true,
   password: true,
-}).strict()
+})
+  .extend({
+    totpCode: z.string().length(6).optional(), //2FA code
+    code: z.string().length(6), //Email OTP code
+  })
+  .strict()
 
 export const RefreshTokenBodySchema = TokenSchema.pick({
   refreshToken: true,
@@ -138,6 +148,37 @@ export const ForgotPasswordBodySchema = z
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Error.PasswordNotMatch', path: ['confirmNewPassword'] })
     }
   })
+
+export const Disable2FABodySchema = z
+  .object({
+    totpCode: z.string().length(6).optional(),
+    code: z.string().length(6).optional(),
+  })
+  .strict()
+  .superRefine(({ totpCode, code }, ctx) => {
+    if ((totpCode !== undefined) === (code !== undefined)) {
+      const message = 'Error.JustOneOfTwoFields'
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message,
+        path: ['totpCode'],
+      })
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message,
+        path: ['code'],
+      })
+    }
+  })
+
+export const TwoFactorSetupResSchema = z.object({
+  secret: z.string(),
+  url: z.string(),
+})
+
+export type TwoFactorSetupResType = z.infer<typeof TwoFactorSetupResSchema>
+
+export type Disable2FABodyType = z.infer<typeof Disable2FABodySchema>
 
 export type RoleType = z.infer<typeof RoleSchema>
 

@@ -8,6 +8,8 @@ import {
   SendOTPBodySchema,
   GoogleAuthUrlResSchema,
   ForgotPasswordBodySchema,
+  Disable2FABodySchema,
+  TwoFactorSetupResSchema,
 } from './models/auth.model'
 import { RegisterBodySchema } from './models/auth.model'
 
@@ -20,3 +22,5 @@ export class LogoutBodyDTO extends createZodDto(LogoutBodySchema) {}
 export class SendOTPBodyDTO extends createZodDto(SendOTPBodySchema) {}
 export class GoogleAuthUrlResDTO extends createZodDto(GoogleAuthUrlResSchema) {}
 export class ForgotPasswordBodyDTO extends createZodDto(ForgotPasswordBodySchema) {}
+export class Disable2FABodyDTO extends createZodDto(Disable2FABodySchema) {}
+export class TwoFactorSetupResDTO extends createZodDto(TwoFactorSetupResSchema) {}

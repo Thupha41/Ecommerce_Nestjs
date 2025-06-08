@@ -65,9 +65,10 @@ export class AuthService {
           roleId: clientRoleId,
         }),
         this.authRepository.deleteVerificationCode({
-          email: body.email,
-          type: TypeOfVerificationCode.REGISTER,
-          code: body.code,
+          email_type: {
+            email: body.email,
+            type: TypeOfVerificationCode.REGISTER,
+          },
         }),
       ])
 
@@ -85,9 +86,10 @@ export class AuthService {
 
   async validateVerificationCode(email: string, code: string, type: TypeOfVerificationCode) {
     const checkCodeExist = await this.authRepository.findUniqueVerificationCode({
-      email,
-      code,
-      type,
+      email_type: {
+        email,
+        type,
+      },
     })
     if (!checkCodeExist) {
       throw InvalidOTPException
@@ -294,9 +296,10 @@ export class AuthService {
     await Promise.all([
       this.authRepository.updateUser({ id: checkEmailExist.id }, { password: hashingPassword }),
       this.authRepository.deleteVerificationCode({
-        email,
-        type: TypeOfVerificationCode.FORGOT_PASSWORD,
-        code,
+        email_type: {
+          email,
+          type: TypeOfVerificationCode.FORGOT_PASSWORD,
+        },
       }),
     ])
 
