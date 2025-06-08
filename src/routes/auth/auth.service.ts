@@ -250,7 +250,7 @@ export class AuthService {
     if (checkEmailExist && type === TypeOfVerificationCode.REGISTER) {
       throw EmailAlreadyExistsException
     }
-    if (checkEmailExist && type === TypeOfVerificationCode.FORGOT_PASSWORD) {
+    if (!checkEmailExist && type === TypeOfVerificationCode.FORGOT_PASSWORD) {
       throw EmailNotFoundException
     }
     //2. Generate OTP
@@ -263,9 +263,9 @@ export class AuthService {
     })
 
     //3. Send OTP to email
-    const { error } = await this.emailService.sendOTPCodeEmail({ email, code: otp })
+    const { success } = await this.emailService.sendOTPCodeEmail({ email, code: otp })
 
-    if (error) {
+    if (!success) {
       throw FailedToSendOTPException
     }
 

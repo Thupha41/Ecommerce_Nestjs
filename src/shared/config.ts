@@ -36,13 +36,17 @@ const configSchema = z.object({
 
   ADMIN_NAME: z.string(),
 
+  //Email service
   OTP_EXPIRES_IN: z.string(),
-
-  RESEND_API_KEY: z.string(),
+  // RESEND_API_KEY: z.string(),
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.string(),
 
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REDIRECT_URI: z.string(),
+  GOOGLE_APP_EMAIL: z.string(),
+  GOOGLE_APP_PASSWORD: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)
