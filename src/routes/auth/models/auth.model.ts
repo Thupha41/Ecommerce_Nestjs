@@ -87,6 +87,13 @@ export const LoginBodySchema = UserSchema.pick({
     code: z.string().length(6).optional(), //Email OTP code
   })
   .strict()
+  .superRefine(({ totpCode, code }, ctx) => {
+    const message = 'Error.JustOneOfTwoFields'
+    if ((totpCode !== undefined) === (code !== undefined)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: ['totpCode'] })
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: ['code'] })
+    }
+  })
 
 export const RefreshTokenBodySchema = TokenSchema.pick({
   refreshToken: true,
