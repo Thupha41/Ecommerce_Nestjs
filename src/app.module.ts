@@ -8,8 +8,9 @@ import CustomZodValidationPipe from './shared/pipes/custom-validation.pipe'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
 import { CatchEverythingFilter } from './shared/filters/catch-everything.filter'
+import { WebSocketModule } from './websockets/websocket.module'
 @Module({
-  imports: [SharedModule, AuthModule],
+  imports: [SharedModule, AuthModule, WebSocketModule],
   controllers: [AppController],
   providers: [
     AppService,
