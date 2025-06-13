@@ -32,7 +32,7 @@ import {
   UserNotFoundException,
   InvalidTOTPAndCodeException,
   InvalidTOTPException,
-} from './models/error.model'
+} from './models/auth.error.model'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 @Injectable()
 export class AuthService {

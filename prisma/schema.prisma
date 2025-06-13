@@ -79,6 +79,7 @@ model User {
   updatedBrands               Brand[]               @relation("BrandUpdatedBy")
   createdPermissions          Permission[]          @relation("PermissionCreatedBy")
   updatedPermissions          Permission[]          @relation("PermissionUpdatedBy")
+  deletedPermissions          Permission[]          @relation("PermissionDeletedBy")
   createdRoles                Role[]                @relation("RoleCreatedBy")
   updatedRoles                Role[]                @relation("RoleUpdatedBy")
   createdOrders               Order[]               @relation("OrderCreatedBy")
@@ -172,11 +173,13 @@ model Permission {
   method      HTTPMethod
   createdById Int?       @map("createdById")
   updatedById Int?       @map("updatedById")
+  deletedById Int?       @map("deletedById")
   deletedAt   DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   createdBy   User?      @relation("PermissionCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?      @relation("PermissionUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User?      @relation("PermissionDeletedBy", fields: [deletedById], references: [id])
   roles       Role[]
 
   @@index([deletedAt])
