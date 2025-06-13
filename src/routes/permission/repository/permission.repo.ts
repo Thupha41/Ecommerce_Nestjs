@@ -102,7 +102,7 @@ export class PermissionRepository implements IPermissionRepository {
           data: {
             deletedAt: new Date(),
             updatedById: deletedById,
-            deletedById,
+            // deletedById,
           },
         })
   }

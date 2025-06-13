@@ -49,6 +49,10 @@ const configSchema = z.object({
   GOOGLE_APP_PASSWORD: z.string(),
 
   APP_NAME: z.string(),
+  DB_NAME: z.string(),
+  DB_PASSWORD: z.string(),
+  DB_USER: z.string(),
+  DB_PORT: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)
