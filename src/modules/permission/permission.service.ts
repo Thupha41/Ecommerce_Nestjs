@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { CreatePermissionBodyType, GetPermissionQueryType, UpdatePermissionBodyType } from './models/permission.model'
 import { PermissionAlreadyExistsException, PermissionNotFoundException } from './models/permission.error.model'
 import { IPermissionRepository } from './repository/permission.repo.interface'
-import { isNotFoundError, isUniqueConstraintError } from 'src/shared/helpers'
+import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 
 @Injectable()
 export class PermissionService {
@@ -26,7 +26,7 @@ export class PermissionService {
       const permission = await this.permissionRepository.create({ data, createdById })
       return permission
     } catch (error) {
-      if (isUniqueConstraintError(error)) {
+      if (isUniqueConstraintPrismaError(error)) {
         throw PermissionAlreadyExistsException
       }
       throw error
@@ -38,7 +38,7 @@ export class PermissionService {
       const permission = await this.permissionRepository.update({ id, updatedById, data })
       return permission
     } catch (error) {
-      if (isNotFoundError(error)) {
+      if (isNotFoundPrismaError(error)) {
         throw PermissionNotFoundException
       }
       throw error
@@ -52,7 +52,7 @@ export class PermissionService {
         message: 'Delete permission successfully',
       }
     } catch (error) {
-      if (isNotFoundError(error)) {
+      if (isNotFoundPrismaError(error)) {
         throw PermissionNotFoundException
       }
       throw error

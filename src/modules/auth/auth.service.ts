@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
-import { isUniqueConstraintError, isNotFoundError, generateOTP } from 'src/shared/helpers'
+import { isUniqueConstraintPrismaError, isNotFoundPrismaError, generateOTP } from 'src/shared/helpers'
 import { RolesService } from './role.service'
 import {
   RefreshTokenBodyType,
@@ -82,7 +82,7 @@ export class AuthService {
       return user
     } catch (error) {
       console.log('>>> check register error', error)
-      if (isUniqueConstraintError(error)) {
+      if (isUniqueConstraintPrismaError(error)) {
         if (error.meta?.target instanceof Array && error.meta.target[0] === 'email') {
           throw EmailAlreadyExistsException
         }
@@ -239,7 +239,7 @@ export class AuthService {
       return tokens
     } catch (error) {
       console.log('>>> check refresh token error', error)
-      if (isNotFoundError(error)) {
+      if (isNotFoundPrismaError(error)) {
         throw RefreshTokenAlreadyUsedException
       }
       throw RefreshTokenAlreadyUsedException
@@ -271,7 +271,7 @@ export class AuthService {
       }
     } catch (error) {
       console.log('>>> check refresh token error', error)
-      if (isNotFoundError(error)) {
+      if (isNotFoundPrismaError(error)) {
         throw RefreshTokenAlreadyUsedException
       }
       throw RefreshTokenNotFoundException
@@ -289,7 +289,7 @@ export class AuthService {
       throw EmailNotFoundException
     }
     //2. Generate OTP
-    const otp = generateOTP(6)
+    const otp = generateOTP()
     const verificationCode = await this.authRepository.createVerificationCode({
       email,
       code: otp,
