@@ -3,13 +3,13 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { SharedModule } from './shared/shared.module'
 import { APP_INTERCEPTOR, APP_PIPE, APP_FILTER } from '@nestjs/core'
-import { AuthModule } from './routes/auth/auth.module'
+import { AuthModule } from './modules/auth/auth.module'
 import CustomZodValidationPipe from './shared/pipes/custom-validation.pipe'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
 import { CatchEverythingFilter } from './shared/filters/catch-everything.filter'
 import { WebSocketModule } from './websockets/websocket.module'
-import { PermissionModule } from './routes/permission/permission.module'
+import { PermissionModule } from './modules/permission/permission.module'
 @Module({
   imports: [SharedModule, AuthModule, WebSocketModule, PermissionModule],
   controllers: [AppController],

@@ -1,18 +1,34 @@
 import { Prisma } from '@prisma/client'
 import { randomInt } from 'crypto'
+import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
 
-export function isUniqueConstraintError(error: any): error is Prisma.PrismaClientKnownRequestError {
+// Type Predicate
+export function isUniqueConstraintPrismaError(error: any): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
 }
 
-export function isNotFoundError(error: any): error is Prisma.PrismaClientKnownRequestError {
+export function isNotFoundPrismaError(error: any): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
 }
 
-export function isPrismaError(error: any): error is Prisma.PrismaClientKnownRequestError {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P1001'
+export function isForeignKeyConstraintPrismaError(error: any): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003'
 }
 
-export function generateOTP(length: number): string {
-  return randomInt(10 ** (length - 1), 10 ** length).toString()
+export const generateOTP = () => {
+  return String(randomInt(100000, 1000000))
+}
+
+export const generateRandomFilename = (filename: string) => {
+  const ext = path.extname(filename)
+  return `${uuidv4()}${ext}`
+}
+
+export const generateCancelPaymentJobId = (paymentId: number) => {
+  return `paymentId-${paymentId}`
+}
+
+export const generateRoomUserId = (userId: number) => {
+  return `userId-${userId}`
 }

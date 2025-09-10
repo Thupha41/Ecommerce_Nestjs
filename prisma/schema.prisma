@@ -15,9 +15,8 @@ datasource db {
 }
 
 model Language {
-  id                   Int                   @id @default(autoincrement())
+  id                   String                @id @db.VarChar(10)
   name                 String
-  code                 String                @unique @db.VarChar(10)
   createdById          Int?                  @map("createdById")
   updatedById          Int?                  @map("updatedById")
   deletedAt            DateTime?
@@ -29,6 +28,8 @@ model Language {
   productTranslations  ProductTranslation[]
   categoryTranslations CategoryTranslation[]
   brandTranslations    BrandTranslation[]
+
+  @@index([deletedAt])
 }
 
 model User {
@@ -107,12 +108,14 @@ model User {
   Message                     Message[]
   createdVariantOptions       VariantOption[]       @relation("VariantOptionCreatedBy")
   updatedVariantOptions       VariantOption[]       @relation("VariantOptionUpdatedBy")
+
+  @@index([deletedAt])
 }
 
 model UserTranslation {
   id          Int       @id @default(autoincrement())
   userId      Int
-  languageId  Int
+  languageId  String
   address     String?
   description String?
   createdById Int?      @map("createdById")
@@ -125,6 +128,8 @@ model UserTranslation {
   createdBy   User?     @relation("UserTranslationCreatedBy", fields: [createdById], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "UserTranslation_createdBy_fkey")
   updatedBy   User?     @relation("UserTranslationUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "UserTranslation_updatedBy_fkey")
   User        User      @relation(fields: [userId], references: [id])
+
+  @@index([deletedAt])
 }
 
 model VerificationCode {
@@ -137,6 +142,7 @@ model VerificationCode {
 
   @@unique([email, type])
   @@index([expiresAt])
+  @@index([email, type])
 }
 
 model Device {
@@ -199,6 +205,8 @@ model Role {
   updatedBy   User?        @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
   users       User[]
   permissions Permission[]
+
+  @@index([deletedAt])
 }
 
 model Product {
@@ -220,12 +228,14 @@ model Product {
   skus                SKU[]
   reviews             Review[]
   categories          Category[]
+
+  @@index([deletedAt])
 }
 
 model ProductTranslation {
   id          Int       @id @default(autoincrement())
   productId   Int
-  languageId  Int
+  languageId  String
   name        String
   description String
   createdById Int?      @map("createdById")
@@ -239,6 +249,8 @@ model ProductTranslation {
   createdBy   User?     @relation("ProductTranslationCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?     @relation("ProductTranslationUpdatedBy", fields: [updatedById], references: [id])
   user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([deletedAt])
 }
 
 model Category {
@@ -255,12 +267,14 @@ model Category {
   updatedBy            User?                 @relation("CategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade, onUpdate: NoAction)
   categoryTranslations CategoryTranslation[]
   products             Product[]
+
+  @@index([deletedAt])
 }
 
 model CategoryTranslation {
   id          Int       @id @default(autoincrement())
   categoryId  Int
-  languageId  Int
+  languageId  String
   name        String
   description String
   createdById Int?      @map("createdById")
@@ -274,6 +288,8 @@ model CategoryTranslation {
   createdBy   User?     @relation("CategoryTranslationCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?     @relation("CategoryTranslationUpdatedBy", fields: [updatedById], references: [id])
   user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([deletedAt])
 }
 
 model Variant {
@@ -289,6 +305,8 @@ model Variant {
   createdBy      User?           @relation("VariantCreatedBy", fields: [createdById], references: [id])
   updatedBy      User?           @relation("VariantUpdatedBy", fields: [updatedById], references: [id])
   variantOptions VariantOption[]
+
+  @@index([deletedAt])
 }
 
 model VariantOption {
@@ -304,6 +322,8 @@ model VariantOption {
   createdBy   User?     @relation("VariantOptionCreatedBy", fields: [createdById], references: [id], onDelete: Cascade, onUpdate: NoAction)
   updatedBy   User?     @relation("VariantOptionUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade, onUpdate: NoAction)
   skus        SKU[]
+
+  @@index([deletedAt])
 }
 
 model SKU {
@@ -324,6 +344,8 @@ model SKU {
   cartItems           CartItem[]
   productSKUSnapshots ProductSKUSnapshot[]
   variantOptions      VariantOption[]
+
+  @@index([deletedAt])
 }
 
 model Brand {
@@ -339,12 +361,14 @@ model Brand {
   products          Product[]
   brandTranslations BrandTranslation[]
   reviews           Review[]
+
+  @@index([deletedAt])
 }
 
 model BrandTranslation {
   id          Int       @id @default(autoincrement())
   brandId     Int
-  languageId  Int
+  languageId  String
   name        String
   description String
   createdById Int?      @map("createdById")
@@ -358,6 +382,8 @@ model BrandTranslation {
   createdBy   User?     @relation("BrandTranslationCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?     @relation("BrandTranslationUpdatedBy", fields: [updatedById], references: [id])
   user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([deletedAt])
 }
 
 model CartItem {
@@ -401,6 +427,8 @@ model Order {
   createdBy   User?                @relation("OrderCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
   items       ProductSKUSnapshot[]
+
+  @@index([deletedAt])
 }
 
 model Review {
@@ -420,6 +448,8 @@ model Review {
   brand       Brand?    @relation(fields: [brandId], references: [id])
   createdBy   User?     @relation("ReviewCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?     @relation("ReviewUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([deletedAt])
 }
 
 model PaymentTransaction {

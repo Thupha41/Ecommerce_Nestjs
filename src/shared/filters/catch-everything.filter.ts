@@ -1,6 +1,6 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common'
 import { HttpAdapterHost } from '@nestjs/core'
-import { isUniqueConstraintError } from '../helpers'
+import { isUniqueConstraintPrismaError } from '../helpers'
 
 @Catch()
 export class CatchEverythingFilter implements ExceptionFilter {
@@ -27,7 +27,7 @@ export class CatchEverythingFilter implements ExceptionFilter {
       httpStatus = exception.getStatus()
       const response = exception.getResponse()
       message = typeof response === 'string' ? response : (response as any)?.message || 'Internal server error'
-    } else if (isUniqueConstraintError(exception)) {
+    } else if (isUniqueConstraintPrismaError(exception)) {
       httpStatus = HttpStatus.CONFLICT
       message = 'Duplicate entry detected. Please ensure the data is unique.'
     } else {
