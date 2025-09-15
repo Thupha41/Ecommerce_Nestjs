@@ -14,34 +14,6 @@ import { IRoleRepository } from './role.repo.interface'
 export class RoleRepo implements IRoleRepository {
   constructor(private prismaService: PrismaService) {}
 
-  // Helper method to ensure all required fields are present
-  private mapToRoleType(role: Record<string, unknown>): RoleType {
-    return {
-      id: role.id as number,
-      name: role.name as string,
-      description: role.description as string,
-      isActive: role.isActive as boolean,
-      createdById: role.createdById as number | null,
-      updatedById: role.updatedById as number | null,
-      deletedById: (role.deletedById as number | null) || null,
-      deletedAt: role.deletedAt as Date | null,
-      createdAt: role.createdAt as Date,
-      updatedAt: role.updatedAt as Date,
-    }
-  }
-
-  // Helper method to map role with permissions
-  private mapToRoleWithPermissions(role: Record<string, unknown>): RoleWithPermissionsType {
-    // Type assertion needed because we know the structure but TypeScript doesn't
-    const permissions = Array.isArray(role.permissions) ? role.permissions : []
-    const typedRole = this.mapToRoleType(role)
-
-    return {
-      ...typedRole,
-      permissions: permissions as any,
-    }
-  }
-
   async list(pagination: GetRolesQueryType): Promise<GetRolesResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
@@ -60,7 +32,7 @@ export class RoleRepo implements IRoleRepository {
       }),
     ])
     return {
-      data: data.map((role) => this.mapToRoleType(role)),
+      data,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,
@@ -68,8 +40,8 @@ export class RoleRepo implements IRoleRepository {
     }
   }
 
-  async findById(id: number): Promise<RoleWithPermissionsType | null> {
-    const role = await this.prismaService.role.findUnique({
+  findById(id: number): Promise<RoleWithPermissionsType | null> {
+    return this.prismaService.role.findUnique({
       where: {
         id,
         deletedAt: null,
@@ -82,20 +54,15 @@ export class RoleRepo implements IRoleRepository {
         },
       },
     })
-
-    if (!role) return null
-
-    return this.mapToRoleWithPermissions(role)
   }
 
-  async create({ createdById, data }: { createdById: number | null; data: CreateRoleBodyType }): Promise<RoleType> {
-    const role = await this.prismaService.role.create({
+  create({ createdById, data }: { createdById: number | null; data: CreateRoleBodyType }): Promise<RoleType> {
+    return this.prismaService.role.create({
       data: {
         ...data,
         createdById,
       },
     })
-    return this.mapToRoleType(role)
   }
 
   async update({
@@ -119,12 +86,11 @@ export class RoleRepo implements IRoleRepository {
       const deletedPermission = permissions.filter((permission) => permission.deletedAt)
       if (deletedPermission.length > 0) {
         const deletedIds = deletedPermission.map((permission) => permission.id).join(', ')
-        const error = new Error(`Permission with id has been deleted: ${deletedIds}`)
-        throw error
+        throw new Error(`Permission with id has been deleted: ${deletedIds}`)
       }
     }
 
-    const role = await this.prismaService.role.update({
+    return this.prismaService.role.update({
       where: {
         id,
         deletedAt: null,
@@ -146,11 +112,9 @@ export class RoleRepo implements IRoleRepository {
         },
       },
     })
-
-    return this.mapToRoleWithPermissions(role)
   }
 
-  async delete(
+  delete(
     {
       id,
       deletedById,
@@ -160,25 +124,20 @@ export class RoleRepo implements IRoleRepository {
     },
     isHard?: boolean,
   ): Promise<RoleType> {
-    const role = isHard
-      ? await this.prismaService.role.delete({
+    return isHard
+      ? this.prismaService.role.delete({
           where: {
             id,
           },
         })
-      : await this.prismaService.role.update({
+      : this.prismaService.role.update({
           where: {
             id,
             deletedAt: null,
           },
           data: {
             deletedAt: new Date(),
-            deletedById,
-            // Using any cast to bypass type checking as the schema includes this field
-            // but Prisma types don't seem to recognize it
-          } as any,
+          },
         })
-
-    return this.mapToRoleType(role)
   }
 }

@@ -1,23 +1,25 @@
 export const REQUEST_USER_KEY = 'user'
-export const AUTH_TYPE = {
-  BEARER: 'Bearer',
-  API_KEY: 'ApiKey',
-  NONE: 'None',
+export const REQUEST_ROLE_PERMISSIONS = 'role_permissions'
+
+export const AuthType = {
+  Bearer: 'Bearer',
+  None: 'None',
+  PaymentAPIKey: 'PaymentAPIKey',
 } as const
 
-export type AuthType = (typeof AUTH_TYPE)[keyof typeof AUTH_TYPE]
+export type AuthTypeType = (typeof AuthType)[keyof typeof AuthType]
 
 export const ConditionGuard = {
-  AND: 'and',
-  OR: 'or',
+  And: 'and',
+  Or: 'or',
 } as const
 
-export type ConditionGuard = (typeof ConditionGuard)[keyof typeof ConditionGuard]
+export type ConditionGuardType = (typeof ConditionGuard)[keyof typeof ConditionGuard]
 
 export const UserStatus = {
   ACTIVE: 'ACTIVE',
-  BLOCKED: 'BLOCKED',
   INACTIVE: 'INACTIVE',
+  BLOCKED: 'BLOCKED',
 } as const
 
 export const TypeOfVerificationCode = {
@@ -27,4 +29,4 @@ export const TypeOfVerificationCode = {
   DISABLE_2FA: 'DISABLE_2FA',
 } as const
 
-export type TypeOfVerificationCode = (typeof TypeOfVerificationCode)[keyof typeof TypeOfVerificationCode]
+export type TypeOfVerificationCodeType = (typeof TypeOfVerificationCode)[keyof typeof TypeOfVerificationCode]

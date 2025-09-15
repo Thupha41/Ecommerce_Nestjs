@@ -1,31 +1,108 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
-import { TokenService } from '../services/token.service'
-import { REQUEST_USER_KEY } from '../constants/auth.constants'
-import { Request } from 'express'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common'
+import { Cache } from 'cache-manager'
+import { keyBy } from 'lodash'
+import { REQUEST_ROLE_PERMISSIONS, REQUEST_USER_KEY } from 'src/shared/constants/auth.constants'
+import { HTTPMethod } from 'src/shared/constants/permission.constants'
+import { RolePermissionsType } from 'src/shared/models/shared-role.model'
+import { PrismaService } from 'src/shared/services/prisma.service'
+import { TokenService } from 'src/shared/services/token.service'
+import { IAccessTokenPayload } from 'src/shared/types/jwt.types'
 
-// Extend the Express Request type
-interface RequestWithUser extends Request {
-  [REQUEST_USER_KEY]: any
+type Permission = RolePermissionsType['permissions'][number]
+type CachedRole = RolePermissionsType & {
+  permissions: {
+    [key: string]: Permission
+  }
 }
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
-  constructor(private readonly tokenService: TokenService) {}
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly prismaService: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<RequestWithUser>()
-    const accessToken = request.headers.authorization?.split(' ')?.[1]
+    const request = context.switchToHttp().getRequest()
+    // Extract và validate token
+    const decodedAccessToken = await this.extractAndValidateToken(request)
 
-    if (!accessToken) {
-      throw new UnauthorizedException('No access token provided')
-    }
+    // Check user permission
+    await this.validateUserPermission(decodedAccessToken, request)
+    return true
+  }
 
+  private async extractAndValidateToken(request: any): Promise<IAccessTokenPayload> {
+    const accessToken = this.extractAccessTokenFromHeader(request)
     try {
       const decodedAccessToken = await this.tokenService.verifyAccessToken(accessToken)
+
       request[REQUEST_USER_KEY] = decodedAccessToken
-      return true
+      return decodedAccessToken
     } catch {
-      throw new UnauthorizedException('Invalid access token')
+      throw new UnauthorizedException('Error.InvalidAccessToken')
+    }
+  }
+
+  private extractAccessTokenFromHeader(request: any): string {
+    const accessToken = request.headers.authorization?.split(' ')[1]
+    if (!accessToken) {
+      throw new UnauthorizedException('Error.MissingAccessToken')
+    }
+    return accessToken
+  }
+
+  private async validateUserPermission(decodedAccessToken: IAccessTokenPayload, request: any): Promise<void> {
+    const roleId: number = decodedAccessToken.roleId
+    const path: string = request.route.path
+    const method = request.method as keyof typeof HTTPMethod
+    const cacheKey = `role:${roleId}`
+    // 1. Thử lấy từ cache
+    let cachedRole = await this.cacheManager.get<CachedRole>(cacheKey)
+    // 2. Nếu không có trong cache, thì truy vấn từ cơ sở dữ liệu
+    if (cachedRole === null) {
+      const role = await this.prismaService.role
+        .findUniqueOrThrow({
+          where: {
+            id: roleId,
+            deletedAt: null,
+            isActive: true,
+          },
+          include: {
+            permissions: {
+              where: {
+                deletedAt: null,
+              },
+            },
+          },
+        })
+        .catch(() => {
+          throw new ForbiddenException()
+        })
+
+      const permissionObject = keyBy(
+        role.permissions,
+        (permission) => `${permission.path}:${permission.method}`,
+      ) as CachedRole['permissions']
+      cachedRole = { ...role, permissions: permissionObject }
+      await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
+
+      request[REQUEST_ROLE_PERMISSIONS] = role
+    }
+
+    // 3. Kiểm tra quyền truy cập
+    const canAccess: Permission | undefined = cachedRole?.permissions[`${path}:${method}`]
+    if (!canAccess) {
+      throw new ForbiddenException()
     }
   }
 }
