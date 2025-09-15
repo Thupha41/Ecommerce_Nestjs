@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
   CreateLanguageBodyDTO,
@@ -10,23 +10,33 @@ import {
 import { LanguageService } from 'src/modules/language/language.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 
 @Controller('languages')
+@UseGuards(AccessTokenGuard)
+@ApiBearerAuth()
+@ApiTags('Languages')
 export class LanguageController {
   constructor(private readonly languageService: LanguageService) {}
-
+  @ApiOperation({ summary: 'Get all languages' })
+  @ApiResponse({ status: 200, description: 'Get all languages', type: GetLanguagesResDTO })
   @Get()
   @ZodSerializerDto(GetLanguagesResDTO)
   findAll() {
     return this.languageService.findAll()
   }
 
+  @ApiOperation({ summary: 'Get language by id' })
+  @ApiResponse({ status: 200, description: 'Get language by id', type: GetLanguageDetailResDTO })
   @Get(':languageId')
   @ZodSerializerDto(GetLanguageDetailResDTO)
   findById(@Param() params: GetLanguageParamsDTO) {
     return this.languageService.findById(params.languageId)
   }
 
+  @ApiOperation({ summary: 'Create language' })
+  @ApiResponse({ status: 200, description: 'Create language', type: GetLanguageDetailResDTO })
   @Post()
   @ZodSerializerDto(GetLanguageDetailResDTO)
   create(@Body() body: CreateLanguageBodyDTO, @ActiveUser('userId') userId: number) {
@@ -39,6 +49,8 @@ export class LanguageController {
 
   // Kiểm tra soft delete: Theo nguyên tắc chung của soft delete, không nên cho phép cập nhật bản ghi đã bị xóa trừ khi có yêu cầu đặc biệt (ví dụ: khôi phục hoặc chỉnh sửa dữ liệu lịch sử).
 
+  @ApiOperation({ summary: 'Update language' })
+  @ApiResponse({ status: 200, description: 'Update language', type: GetLanguageDetailResDTO })
   @Put(':languageId')
   @ZodSerializerDto(GetLanguageDetailResDTO)
   update(
@@ -53,6 +65,8 @@ export class LanguageController {
     })
   }
 
+  @ApiOperation({ summary: 'Delete language' })
+  @ApiResponse({ status: 200, description: 'Delete language', type: MessageResDTO })
   @Delete(':languageId')
   @ZodSerializerDto(MessageResDTO)
   delete(@Param() params: GetLanguageParamsDTO) {

@@ -14,8 +14,6 @@ export class EmailService {
     const googleEmail = envConfig.GOOGLE_APP_EMAIL
     const googleAppPassword = envConfig.GOOGLE_APP_PASSWORD
 
-    console.log('>>> Initializing Gmail SMTP service')
-
     // Gmail supports two SMTP ports:
     // - Port 465: Uses implicit SSL (secure: true)
     // - Port 587: Uses STARTTLS (secure: false)

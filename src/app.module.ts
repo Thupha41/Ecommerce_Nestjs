@@ -10,8 +10,19 @@ import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
 import { CatchEverythingFilter } from './shared/filters/catch-everything.filter'
 import { WebSocketModule } from './websockets/websocket.module'
 import { PermissionModule } from './modules/permission/permission.module'
+import { RoleModule } from './modules/role/role.module'
+import { CacheModule } from '@nestjs/cache-manager'
+import { LanguageModule } from './modules/language/language.module'
 @Module({
-  imports: [SharedModule, AuthModule, WebSocketModule, PermissionModule],
+  imports: [
+    SharedModule,
+    AuthModule,
+    WebSocketModule,
+    PermissionModule,
+    RoleModule,
+    CacheModule.register(),
+    LanguageModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

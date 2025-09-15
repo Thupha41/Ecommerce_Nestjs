@@ -4,7 +4,7 @@ import { LanguageRepo } from 'src/modules/language/repository/language.repo'
 import { LanguageService } from 'src/modules/language/language.service'
 
 @Module({
-  providers: [LanguageService, LanguageRepo],
+  providers: [LanguageService, LanguageRepo, { provide: 'ILanguageRepository', useClass: LanguageRepo }],
   controllers: [LanguageController],
 })
 export class LanguageModule {}

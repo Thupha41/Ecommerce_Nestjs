@@ -3,7 +3,6 @@ import { PermissionSchema } from 'src/shared/models/shared-permission.model'
 
 export const CreatePermissionBodySchema = PermissionSchema.pick({
   name: true,
-  description: true,
   path: true,
   method: true,
 }).strict()

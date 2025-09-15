@@ -1,73 +1,127 @@
-import { NestFactory } from '@nestjs/core'
-import { AppModule } from 'src/app.module'
-import { PrismaService } from 'src/shared/services/prisma.service'
-import { HTTPMethod } from '@prisma/client'
+// import { NestFactory } from '@nestjs/core'
+// import { AppModule } from 'src/app.module'
+// import { RoleName } from 'src/shared/constants/role.constants'
+// import { HTTPMethod } from 'src/shared/constants/permission.constants'
+// import { PrismaService } from 'src/shared/services/prisma.service'
 
-const prisma = new PrismaService()
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
-  await app.listen(3010)
-  const server = app.getHttpAdapter().getInstance()
-  const router = server.router
+// const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS']
+// const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS']
+// const prisma = new PrismaService()
 
-  const availableRoutes: [] = router.stack
-    .map((layer) => {
-      if (layer.route) {
-        const path = layer.route?.path
-        const method = String(layer.route?.stack[0].method).toUpperCase() as keyof typeof HTTPMethod
+// async function bootstrap() {
+//   const app = await NestFactory.create(AppModule)
+//   await app.listen(3010)
+//   const server = app.getHttpAdapter().getInstance()
+//   const router = server.router
+//   const permissionsInDb = await prisma.permission.findMany({
+//     where: {
+//       deletedAt: null,
+//     },
+//   })
+//   const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string; module: string }[] =
+//     router.stack
+//       .map((layer) => {
+//         if (layer.route) {
+//           const path = layer.route?.path
+//           const method = String(layer.route?.stack[0].method).toUpperCase() as keyof typeof HTTPMethod
+//           const moduleName = String(path.split('/')[1]).toUpperCase()
+//           return {
+//             path,
+//             method,
+//             name: method + ' ' + path,
+//             description: '',
+//             module: moduleName,
+//           }
+//         }
+//       })
+//       .filter((item) => item !== undefined)
 
-        // Generate meaningful description based on method and path
-        let description = ''
-        const pathParts = path.split('/')
-        const resourceName = pathParts[1] ? pathParts[1].replace(/-/g, ' ') : 'resource'
+//   // Tạo object permissionInDbMap với key là [method-path]
+//   const permissionInDbMap: Record<string, (typeof permissionsInDb)[0]> = permissionsInDb.reduce((acc, item) => {
+//     acc[`${item.method}-${item.path}`] = item
+//     return acc
+//   }, {})
 
-        // Check if path contains ID parameter
-        const hasIdParam = path.includes('/:')
-        const idParamName = hasIdParam
-          ? // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            pathParts[pathParts.findIndex((part) => part.startsWith(':'))]?.replace(':', '')
-          : null
+//   // Tạo object availableRoutesMap với key là [method-path]
+//   const availableRoutesMap: Record<string, (typeof availableRoutes)[0]> = availableRoutes.reduce((acc, item) => {
+//     acc[`${item.method}-${item.path}`] = item
+//     return acc
+//   }, {})
 
-        switch (method) {
-          case 'GET':
-            description = hasIdParam
-              ? `Get ${resourceName} details by ${idParamName || 'id'}`
-              : `List all ${resourceName}s`
-            break
-          case 'POST':
-            description = `Create a new ${resourceName}`
-            break
-          case 'PUT':
-          case 'PATCH':
-            description = `Update ${resourceName} ${hasIdParam ? `by ${idParamName || 'id'}` : ''}`
-            break
-          case 'DELETE':
-            description = `Delete ${resourceName} ${hasIdParam ? `by ${idParamName || 'id'}` : ''}`
-            break
-          default:
-            description = `${method} ${resourceName}`
-        }
+//   // Tìm permissions trong database mà không tồn tại trong availableRoutes
+//   const permissionsToDelete = permissionsInDb.filter((item) => {
+//     return !availableRoutesMap[`${item.method}-${item.path}`]
+//   })
 
-        return {
-          path,
-          method,
-          name: method + ' ' + path,
-          description,
-        }
-      }
-    })
-    .filter((item) => item !== undefined)
-  console.log(availableRoutes)
+//   // Xóa permissions không tồn tại trong availableRoutes
+//   if (permissionsToDelete.length > 0) {
+//     const deleteResult = await prisma.permission.deleteMany({
+//       where: {
+//         id: {
+//           in: permissionsToDelete.map((item) => item.id),
+//         },
+//       },
+//     })
+//     console.log('Deleted permissions:', deleteResult.count)
+//   } else {
+//     console.log('No permissions to delete')
+//   }
+//   // Tìm routes mà không tồn tại trong permissionsInDb
+//   const routesToAdd = availableRoutes.filter((item) => {
+//     return !permissionInDbMap[`${item.method}-${item.path}`]
+//   })
 
-  //Add vào database
-  try {
-    await prisma.permission.createMany({
-      data: availableRoutes,
-    })
-  } catch (error) {
-    console.log(error)
-  }
-  process.exit(0)
-}
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-bootstrap()
+//   // Thêm các routes này dưới dạng permissions database
+//   if (routesToAdd.length > 0) {
+//     const permissionsToAdd = await prisma.permission.createMany({
+//       data: routesToAdd.map((item) => ({ ...item, description: '' })),
+//       skipDuplicates: true,
+//     })
+//     console.log('Added permissions:', permissionsToAdd.count)
+//   } else {
+//     console.log('No permissions to add')
+//   }
+
+//   // Lấy lại permissions trong database sau khi thêm mới (hoặc bị xóa)
+//   const updatedPermissionsInDb = await prisma.permission.findMany({
+//     where: {
+//       deletedAt: null,
+//     },
+//   })
+
+//   const adminPermissionIds = updatedPermissionsInDb.map((item) => ({ id: item.id }))
+//   const sellerPermissionIds = updatedPermissionsInDb
+//     .filter((item) => SellerModule.includes(item.module))
+//     .map((item) => ({ id: item.id }))
+//   const clientPermissionIds = updatedPermissionsInDb
+//     .filter((item) => ClientModule.includes(item.module))
+//     .map((item) => ({ id: item.id }))
+
+//   await Promise.all([
+//     updateRole(adminPermissionIds, RoleName.Admin),
+//     updateRole(sellerPermissionIds, RoleName.Seller),
+//     updateRole(clientPermissionIds, RoleName.Client),
+//   ])
+//   process.exit(0)
+// }
+
+// const updateRole = async (permissionIds: { id: number }[], roleName: string) => {
+//   // Cập nhật lại các permissions trong Admin Role
+//   const role = await prisma.role.findFirstOrThrow({
+//     where: {
+//       name: roleName,
+//       deletedAt: null,
+//     },
+//   })
+//   await prisma.role.update({
+//     where: {
+//       id: role.id,
+//     },
+//     data: {
+//       permissions: {
+//         set: permissionIds,
+//       },
+//     },
+//   })
+// }
+// bootstrap()

@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common'
-import { LanguageRepo } from 'src/modules/language/repository/language.repo'
+import { Inject, Injectable } from '@nestjs/common'
 import { CreateLanguageBodyType, UpdateLanguageBodyType } from 'src/modules/language/models/language.model'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 import { LanguageAlreadyExistsException } from 'src/modules/language/models/language.error.model'
+import { ILanguageRepository } from './repository/language.repo.interface'
 
 @Injectable()
 export class LanguageService {
-  constructor(private languageRepo: LanguageRepo) {}
+  constructor(@Inject('ILanguageRepository') private languageRepo: ILanguageRepository) {}
 
   async findAll() {
     const data = await this.languageRepo.findAll()
