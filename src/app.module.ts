@@ -13,6 +13,8 @@ import { PermissionModule } from './modules/permission/permission.module'
 import { RoleModule } from './modules/role/role.module'
 import { CacheModule } from '@nestjs/cache-manager'
 import { LanguageModule } from './modules/language/language.module'
+import { ProfileModule } from './modules/profile/profile.module'
+import { UserModule } from './modules/user/user.module'
 @Module({
   imports: [
     SharedModule,
@@ -22,6 +24,8 @@ import { LanguageModule } from './modules/language/language.module'
     RoleModule,
     CacheModule.register(),
     LanguageModule,
+    ProfileModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

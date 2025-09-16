@@ -1,5 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { ApiBearerAuth } from '@nestjs/swagger'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
   CreateUserBodyDTO,
@@ -14,13 +13,19 @@ import { ActiveRolePermissions } from 'src/shared/decorators/active-role-permiss
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { GetUserProfileResDTO, UpdateProfileResDTO } from 'src/shared/dtos/shared-user.dto'
+import { ApiBearerAuth, ApiParam, ApiQuery, ApiBody, ApiTags } from '@nestjs/swagger'
+import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 
 @Controller('users')
+@UseGuards(AccessTokenGuard)
 @ApiBearerAuth()
+@ApiTags('Users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ZodSerializerDto(GetUsersResDTO)
   list(@Query() query: GetUsersQueryDTO) {
     return this.userService.list({
@@ -30,12 +35,14 @@ export class UserController {
   }
 
   @Get(':userId')
+  @ApiParam({ name: 'userId', required: true, type: Number })
   @ZodSerializerDto(GetUserProfileResDTO)
   findById(@Param() params: GetUserParamsDTO) {
     return this.userService.findById(params.userId)
   }
 
   @Post()
+  @ApiBody({ type: CreateUserBodyDTO })
   @ZodSerializerDto(CreateUserResDTO)
   create(
     @Body() body: CreateUserBodyDTO,
@@ -50,6 +57,8 @@ export class UserController {
   }
 
   @Put(':userId')
+  @ApiParam({ name: 'userId', required: true, type: Number })
+  @ApiBody({ type: UpdateUserBodyDTO })
   @ZodSerializerDto(UpdateProfileResDTO)
   update(
     @Body() body: UpdateUserBodyDTO,
@@ -66,6 +75,7 @@ export class UserController {
   }
 
   @Delete(':userId')
+  @ApiParam({ name: 'userId', required: true, type: Number })
   @ZodSerializerDto(MessageResDTO)
   delete(
     @Param() params: GetUserParamsDTO,
