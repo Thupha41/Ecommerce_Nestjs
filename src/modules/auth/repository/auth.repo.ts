@@ -3,7 +3,7 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 import { DeviceType, RefreshTokenType, RegisterBodyType, RoleType, VerificationCodeType } from '../models/auth.model'
 import { IAuthRepository } from './auth.repo.interface'
 import { UserType } from 'src/shared/models/shared-user.model'
-import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
+import { TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {
@@ -75,7 +75,7 @@ export class AuthRepository implements IAuthRepository {
   }
 
   async findUniqueVerificationCode(
-    uniqueValue: { id: number } | { email_type: { email: string; type: TypeOfVerificationCode } },
+    uniqueValue: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null> {
     return await this.prismaService.verificationCode.findUnique({
       where: uniqueValue,
@@ -147,7 +147,7 @@ export class AuthRepository implements IAuthRepository {
   }
 
   async deleteVerificationCode(
-    where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCode } },
+    where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null> {
     return await this.prismaService.verificationCode.delete({
       where,

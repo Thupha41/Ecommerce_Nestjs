@@ -1,7 +1,7 @@
 import { RegisterBodyType, DeviceType, RoleType } from '../models/auth.model'
 import { UserType } from 'src/shared/models/shared-user.model'
 import { VerificationCodeType } from '../models/auth.model'
-import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
+import { TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
 import { RefreshTokenType } from '../models/auth.model'
 export interface IAuthRepository {
   createUser(
@@ -17,7 +17,7 @@ export interface IAuthRepository {
     payload: Pick<VerificationCodeType, 'email' | 'type' | 'code' | 'expiresAt'>,
   ): Promise<VerificationCodeType>
   findUniqueVerificationCode(
-    uniqueValue: { id: number } | { email_type: { email: string; type: TypeOfVerificationCode } },
+    uniqueValue: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null>
   createDevice(
     payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActiveAt' | 'isActive'>>,
@@ -34,6 +34,6 @@ export interface IAuthRepository {
   updateUser(where: { id: number } | { email: string }, data: Partial<Omit<UserType, 'id'>>): Promise<UserType | null>
 
   deleteVerificationCode(
-    where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCode } },
+    where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null>
 }

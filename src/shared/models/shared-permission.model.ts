@@ -15,6 +15,7 @@ export const PermissionSchema = z.object({
     .string()
     .min(1, { message: 'Error.InvalidPermissionPath' })
     .max(255, { message: 'Error.InvalidPermissionPath' }),
+  module: z.string().max(500),
   method: z.enum([
     HTTPMethod.GET,
     HTTPMethod.POST,

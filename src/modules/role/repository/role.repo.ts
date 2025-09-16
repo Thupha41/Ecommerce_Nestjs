@@ -14,6 +14,21 @@ import { IRoleRepository } from './role.repo.interface'
 export class RoleRepo implements IRoleRepository {
   constructor(private prismaService: PrismaService) {}
 
+  private mapToRoleType(role: any): RoleType {
+    return {
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      isActive: role.isActive,
+      createdById: role.createdById,
+      updatedById: role.updatedById,
+      deletedById: role.deletedById ?? null,
+      deletedAt: role.deletedAt,
+      createdAt: role.createdAt,
+      updatedAt: role.updatedAt,
+    }
+  }
+
   async list(pagination: GetRolesQueryType): Promise<GetRolesResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
@@ -31,8 +46,11 @@ export class RoleRepo implements IRoleRepository {
         take,
       }),
     ])
+
+    const mappedData = data.map((role) => this.mapToRoleType(role))
+
     return {
-      data,
+      data: mappedData,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,
@@ -40,8 +58,26 @@ export class RoleRepo implements IRoleRepository {
     }
   }
 
-  findById(id: number): Promise<RoleWithPermissionsType | null> {
-    return this.prismaService.role.findUnique({
+  // Helper method để map permission
+  private mapToPermissionType(permission: any) {
+    return {
+      id: permission.id,
+      name: permission.name,
+      description: permission.description,
+      path: permission.path,
+      method: permission.method,
+      module: permission.module || '', // Đảm bảo module luôn có giá trị
+      createdById: permission.createdById,
+      updatedById: permission.updatedById,
+      deletedById: permission.deletedById ?? null,
+      deletedAt: permission.deletedAt,
+      createdAt: permission.createdAt,
+      updatedAt: permission.updatedAt,
+    }
+  }
+
+  async findById(id: number): Promise<RoleWithPermissionsType | null> {
+    const role = await this.prismaService.role.findUnique({
       where: {
         id,
         deletedAt: null,
@@ -54,15 +90,26 @@ export class RoleRepo implements IRoleRepository {
         },
       },
     })
+
+    if (!role) return null
+
+    const mappedRole = this.mapToRoleType(role)
+    const mappedPermissions = role.permissions.map((permission) => this.mapToPermissionType(permission))
+
+    return {
+      ...mappedRole,
+      permissions: mappedPermissions,
+    }
   }
 
-  create({ createdById, data }: { createdById: number | null; data: CreateRoleBodyType }): Promise<RoleType> {
-    return this.prismaService.role.create({
+  async create({ createdById, data }: { createdById: number | null; data: CreateRoleBodyType }): Promise<RoleType> {
+    const role = await this.prismaService.role.create({
       data: {
         ...data,
         createdById,
       },
     })
+    return this.mapToRoleType(role)
   }
 
   async update({
@@ -74,7 +121,6 @@ export class RoleRepo implements IRoleRepository {
     updatedById: number
     data: UpdateRoleBodyType
   }): Promise<RoleType> {
-    // Kiểm tra nếu có bất cứ permissionId nào mà đã soft delete thì không cho phép cập nhật
     if (data.permissionIds.length > 0) {
       const permissions = await this.prismaService.permission.findMany({
         where: {
@@ -90,7 +136,7 @@ export class RoleRepo implements IRoleRepository {
       }
     }
 
-    return this.prismaService.role.update({
+    const role = await this.prismaService.role.update({
       where: {
         id,
         deletedAt: null,
@@ -112,9 +158,17 @@ export class RoleRepo implements IRoleRepository {
         },
       },
     })
+
+    const mappedPermissions = role.permissions.map((permission) => this.mapToPermissionType(permission))
+    const mappedRole = this.mapToRoleType(role)
+
+    return {
+      ...mappedRole,
+      permissions: mappedPermissions,
+    } as RoleWithPermissionsType
   }
 
-  delete(
+  async delete(
     {
       id,
       deletedById,
@@ -124,20 +178,23 @@ export class RoleRepo implements IRoleRepository {
     },
     isHard?: boolean,
   ): Promise<RoleType> {
-    return isHard
-      ? this.prismaService.role.delete({
+    const role = isHard
+      ? await this.prismaService.role.delete({
           where: {
             id,
           },
         })
-      : this.prismaService.role.update({
+      : await this.prismaService.role.update({
           where: {
             id,
             deletedAt: null,
           },
           data: {
             deletedAt: new Date(),
-          },
+            deletedById: deletedById,
+          } as any,
         })
+
+    return this.mapToRoleType(role)
   }
 }

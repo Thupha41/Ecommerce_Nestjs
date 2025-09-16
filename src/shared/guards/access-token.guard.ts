@@ -17,7 +17,14 @@ import { TokenService } from 'src/shared/services/token.service'
 import { IAccessTokenPayload } from 'src/shared/types/jwt.types'
 
 type Permission = RolePermissionsType['permissions'][number]
-type CachedRole = RolePermissionsType & {
+// Định nghĩa kiểu dữ liệu cho role từ Prisma (có thể thiếu trường deletedById)
+type PrismaRole = Omit<RolePermissionsType, 'deletedById' | 'permissions'> & {
+  deletedById?: number | null
+  permissions: Permission[]
+}
+
+// Định nghĩa kiểu dữ liệu cho role đã cache
+type CachedRole = Omit<RolePermissionsType, 'permissions'> & {
   permissions: {
     [key: string]: Permission
   }
@@ -70,7 +77,7 @@ export class AccessTokenGuard implements CanActivate {
     let cachedRole = await this.cacheManager.get<CachedRole>(cacheKey)
     // 2. Nếu không có trong cache, thì truy vấn từ cơ sở dữ liệu
     if (cachedRole === null) {
-      const role = await this.prismaService.role
+      const role = (await this.prismaService.role
         .findUniqueOrThrow({
           where: {
             id: roleId,
@@ -87,13 +94,18 @@ export class AccessTokenGuard implements CanActivate {
         })
         .catch(() => {
           throw new ForbiddenException()
-        })
+        })) as unknown as PrismaRole
 
       const permissionObject = keyBy(
         role.permissions,
         (permission) => `${permission.path}:${permission.method}`,
       ) as CachedRole['permissions']
-      cachedRole = { ...role, permissions: permissionObject }
+      // Chuyển đổi từ PrismaRole sang CachedRole
+      cachedRole = {
+        ...role,
+        deletedById: role.deletedById ?? null, // Đảm bảo trường này luôn có
+        permissions: permissionObject,
+      } as CachedRole
       await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
 
       request[REQUEST_ROLE_PERMISSIONS] = role

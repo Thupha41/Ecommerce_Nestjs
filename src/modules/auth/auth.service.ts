@@ -15,7 +15,7 @@ import { IAuthRepository } from './repository/auth.repo.interface'
 import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
 import { addMilliseconds } from 'date-fns'
 import ms from 'ms'
-import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
+import { TypeOfVerificationCode, TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
 import { EmailService } from 'src/shared/services/email.service'
 import { IAccessTokenPayloadCreate } from 'src/shared/types/jwt.types'
 import {
@@ -91,7 +91,7 @@ export class AuthService {
     }
   }
 
-  async validateVerificationCode(email: string, code: string, type: TypeOfVerificationCode) {
+  async validateVerificationCode(email: string, code: string, type: TypeOfVerificationCodeType) {
     const checkCodeExist = await this.authRepository.findUniqueVerificationCode({
       email_type: {
         email,

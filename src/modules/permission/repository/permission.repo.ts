@@ -13,6 +13,24 @@ import {
 export class PermissionRepository implements IPermissionRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  // Helper method để đảm bảo tất cả các trường cần thiết đều có mặt
+  private mapToPermissionType(permission: any): PermissionType {
+    return {
+      id: permission.id,
+      name: permission.name,
+      description: permission.description,
+      path: permission.path,
+      method: permission.method,
+      module: permission.module || '', // Đảm bảo module luôn có giá trị
+      createdById: permission.createdById,
+      updatedById: permission.updatedById,
+      // deletedById không nằm trong PermissionType nên không thêm vào
+      deletedAt: permission.deletedAt,
+      createdAt: permission.createdAt,
+      updatedAt: permission.updatedAt,
+    }
+  }
+
   async list(pagination: GetPermissionQueryType): Promise<GetPermissionResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
@@ -30,8 +48,12 @@ export class PermissionRepository implements IPermissionRepository {
         take,
       }),
     ])
+
+    // Đảm bảo mỗi permission đều có đầy đủ các trường
+    const mappedData = data.map((permission) => this.mapToPermissionType(permission))
+
     return {
-      data,
+      data: mappedData,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,
@@ -40,24 +62,36 @@ export class PermissionRepository implements IPermissionRepository {
   }
 
   async findById(id: number): Promise<PermissionType | null> {
-    return await this.prismaService.permission.findUnique({
+    const permission = await this.prismaService.permission.findUnique({
       where: {
         id,
         deletedAt: null,
       },
     })
+
+    if (!permission) return null
+
+    return this.mapToPermissionType(permission)
   }
 
-  create({ createdById, data }: { createdById: number; data: CreatePermissionBodyType }): Promise<PermissionType> {
-    return this.prismaService.permission.create({
+  async create({
+    createdById,
+    data,
+  }: {
+    createdById: number
+    data: CreatePermissionBodyType
+  }): Promise<PermissionType> {
+    const permission = await this.prismaService.permission.create({
       data: {
         ...data,
         createdById,
       },
     })
+
+    return this.mapToPermissionType(permission)
   }
 
-  update({
+  async update({
     id,
     updatedById,
     data,
@@ -66,7 +100,7 @@ export class PermissionRepository implements IPermissionRepository {
     updatedById: number
     data: UpdatePermissionBodyType
   }): Promise<PermissionType> {
-    return this.prismaService.permission.update({
+    const permission = await this.prismaService.permission.update({
       where: {
         id,
         deletedAt: null,
@@ -76,9 +110,11 @@ export class PermissionRepository implements IPermissionRepository {
         updatedById,
       },
     })
+
+    return this.mapToPermissionType(permission)
   }
 
-  delete(
+  async delete(
     {
       id,
       deletedById,
@@ -88,13 +124,13 @@ export class PermissionRepository implements IPermissionRepository {
     },
     isHard?: boolean,
   ): Promise<PermissionType> {
-    return isHard
-      ? this.prismaService.permission.delete({
+    const permission = isHard
+      ? await this.prismaService.permission.delete({
           where: {
             id,
           },
         })
-      : this.prismaService.permission.update({
+      : await this.prismaService.permission.update({
           where: {
             id,
             deletedAt: null,
@@ -102,8 +138,10 @@ export class PermissionRepository implements IPermissionRepository {
           data: {
             deletedAt: new Date(),
             updatedById: deletedById,
-            // deletedById,
-          },
+            deletedById: deletedById,
+          } as any,
         })
+
+    return this.mapToPermissionType(permission)
   }
 }

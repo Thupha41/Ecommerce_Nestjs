@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, HttpException } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthType, ConditionGuard } from 'src/shared/constants/auth.constants'
-import { AUTH_TYPES_KEY, AuthTypeDecoratorPayload } from 'src/shared/decorators/auth.decorator'
+import { AUTH_TYPE_KEY, AuthTypeDecoratorPayload } from 'src/shared/decorators/auth.decorator'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 
 @Injectable()
@@ -27,7 +27,7 @@ export class AuthenticationGuard implements CanActivate {
 
   private getAuthTypeValue(context: ExecutionContext): AuthTypeDecoratorPayload {
     return (
-      this.reflector.getAllAndOverride<AuthTypeDecoratorPayload | undefined>(AUTH_TYPES_KEY, [
+      this.reflector.getAllAndOverride<AuthTypeDecoratorPayload | undefined>(AUTH_TYPE_KEY, [
         context.getHandler(),
         context.getClass(),
       ]) ?? { authTypes: [AuthType.Bearer], options: { condition: ConditionGuard.And } }
