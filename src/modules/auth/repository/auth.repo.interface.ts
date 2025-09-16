@@ -1,8 +1,10 @@
-import { RegisterBodyType, DeviceType, RoleType } from '../models/auth.model'
+import { RegisterBodyType, DeviceType } from '../models/auth.model'
+import { RoleType } from 'src/shared/models/shared-role.model'
 import { UserType } from 'src/shared/models/shared-user.model'
 import { VerificationCodeType } from '../models/auth.model'
 import { TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
 import { RefreshTokenType } from '../models/auth.model'
+import { WhereUniqueUserType } from 'src/shared/repositories/shared-user.repo'
 export interface IAuthRepository {
   createUser(
     user: Omit<RegisterBodyType, 'confirmPassword' | 'code'> & Pick<UserType, 'roleId'>,
@@ -20,18 +22,14 @@ export interface IAuthRepository {
     uniqueValue: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null>
   createDevice(
-    payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActiveAt' | 'isActive'>>,
+    payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActive' | 'isActive'>>,
   ): Promise<DeviceType | null>
-  findUserUniqueUserIncludeRole(
-    uniqueObject: { email: string } | { id: number },
-  ): Promise<(UserType & { role: RoleType }) | null>
+  findUniqueUserIncludeRole(uniqueObject: WhereUniqueUserType): Promise<(UserType & { role: RoleType }) | null>
   findUniqueRefreshTokenIncludeUserRole(uniqueObject: {
     token: string
   }): Promise<(RefreshTokenType & { user: UserType & { role: RoleType } }) | null>
 
   updateDevice(deviceId: number, payload: Partial<DeviceType>): Promise<DeviceType | null>
-
-  updateUser(where: { id: number } | { email: string }, data: Partial<Omit<UserType, 'id'>>): Promise<UserType | null>
 
   deleteVerificationCode(
     where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },

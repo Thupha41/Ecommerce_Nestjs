@@ -1,13 +1,13 @@
 import {
   CreatePermissionBodyType,
-  GetPermissionQueryType,
-  GetPermissionResType,
+  GetPermissionsQueryType,
+  GetPermissionsResType,
   UpdatePermissionBodyType,
 } from '../models/permission.model'
 import { PermissionType } from 'src/shared/models/shared-permission.model'
 
 export interface IPermissionRepository {
-  list(pagination: GetPermissionQueryType): Promise<GetPermissionResType>
+  list(pagination: GetPermissionsQueryType): Promise<GetPermissionsResType>
   findById(id: number): Promise<PermissionType | null>
   create({ createdById, data }: { createdById: number; data: CreatePermissionBodyType }): Promise<PermissionType>
   update({

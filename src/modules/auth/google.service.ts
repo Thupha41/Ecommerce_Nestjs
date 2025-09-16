@@ -54,7 +54,7 @@ export class GoogleService {
       throw InvalidEmailException
     }
 
-    let user = await this.authRepository.findUserUniqueUserIncludeRole({ email: userInfo.email })
+    let user = await this.authRepository.findUniqueUserIncludeRole({ email: userInfo.email })
     if (!user) {
       const clientRoleId = await this.roleService.getClientRoleId()
       const randomPassword = uuidv4()

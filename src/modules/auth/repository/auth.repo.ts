@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/shared/services/prisma.service'
-import { DeviceType, RefreshTokenType, RegisterBodyType, RoleType, VerificationCodeType } from '../models/auth.model'
+import { DeviceType, RefreshTokenType, RegisterBodyType, VerificationCodeType } from '../models/auth.model'
+import { RoleType } from 'src/shared/models/shared-role.model'
 import { IAuthRepository } from './auth.repo.interface'
 import { UserType } from 'src/shared/models/shared-user.model'
 import { TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
-
+import { WhereUniqueUserType } from 'src/shared/repositories/shared-user.repo'
 @Injectable()
 export class AuthRepository implements IAuthRepository {
   constructor(private readonly prismaService: PrismaService) {}
@@ -83,14 +84,14 @@ export class AuthRepository implements IAuthRepository {
   }
 
   async createDevice(
-    payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActiveAt' | 'isActive'>>,
+    payload: Pick<DeviceType, 'userAgent' | 'ip' | 'userId'> & Partial<Pick<DeviceType, 'lastActive' | 'isActive'>>,
   ): Promise<DeviceType> {
     const device = await this.prismaService.device.create({
       data: {
         userId: payload.userId,
         userAgent: payload.userAgent,
         ip: payload.ip,
-        lastActiveAt: payload.lastActiveAt ?? new Date(),
+        lastActive: payload.lastActive ?? new Date(),
         isActive: payload.isActive,
       },
     })
@@ -98,11 +99,12 @@ export class AuthRepository implements IAuthRepository {
     return device as DeviceType
   }
 
-  async findUserUniqueUserIncludeRole(
-    uniqueObject: { email: string } | { id: number },
-  ): Promise<(UserType & { role: RoleType }) | null> {
-    return await this.prismaService.user.findUnique({
-      where: uniqueObject,
+  async findUniqueUserIncludeRole(uniqueObject: WhereUniqueUserType): Promise<(UserType & { role: RoleType }) | null> {
+    return await this.prismaService.user.findFirst({
+      where: {
+        ...uniqueObject,
+        deletedAt: null,
+      },
       include: {
         role: true,
       },
@@ -131,18 +133,8 @@ export class AuthRepository implements IAuthRepository {
       where: { id: deviceId },
       data: {
         ...updateData,
-        lastActiveAt: payload.lastActiveAt ?? undefined,
+        lastActive: payload.lastActive ?? undefined,
       },
-    })
-  }
-
-  async updateUser(
-    where: { id: number } | { email: string },
-    data: Partial<Omit<UserType, 'id'>>,
-  ): Promise<UserType | null> {
-    return await this.prismaService.user.update({
-      where,
-      data,
     })
   }
 

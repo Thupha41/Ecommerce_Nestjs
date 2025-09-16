@@ -1,37 +1,19 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from 'src/shared/services/prisma.service'
-import { IPermissionRepository } from './permission.repo.interface'
 import {
   CreatePermissionBodyType,
-  GetPermissionQueryType,
-  GetPermissionResType,
+  GetPermissionsQueryType,
+  GetPermissionsResType,
   PermissionType,
   UpdatePermissionBodyType,
-} from '../models/permission.model'
+} from 'src/modules/permission/models/permission.model'
+import { PrismaService } from 'src/shared/services/prisma.service'
+import { IPermissionRepository } from './permission.repo.interface'
 
 @Injectable()
 export class PermissionRepository implements IPermissionRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private prismaService: PrismaService) {}
 
-  // Helper method để đảm bảo tất cả các trường cần thiết đều có mặt
-  private mapToPermissionType(permission: any): PermissionType {
-    return {
-      id: permission.id,
-      name: permission.name,
-      description: permission.description,
-      path: permission.path,
-      method: permission.method,
-      module: permission.module || '', // Đảm bảo module luôn có giá trị
-      createdById: permission.createdById,
-      updatedById: permission.updatedById,
-      // deletedById không nằm trong PermissionType nên không thêm vào
-      deletedAt: permission.deletedAt,
-      createdAt: permission.createdAt,
-      updatedAt: permission.updatedAt,
-    }
-  }
-
-  async list(pagination: GetPermissionQueryType): Promise<GetPermissionResType> {
+  async list(pagination: GetPermissionsQueryType): Promise<GetPermissionsResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
     const [totalItems, data] = await Promise.all([
@@ -48,12 +30,8 @@ export class PermissionRepository implements IPermissionRepository {
         take,
       }),
     ])
-
-    // Đảm bảo mỗi permission đều có đầy đủ các trường
-    const mappedData = data.map((permission) => this.mapToPermissionType(permission))
-
     return {
-      data: mappedData,
+      data,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,
@@ -61,37 +39,31 @@ export class PermissionRepository implements IPermissionRepository {
     }
   }
 
-  async findById(id: number): Promise<PermissionType | null> {
-    const permission = await this.prismaService.permission.findUnique({
+  findById(id: number): Promise<PermissionType | null> {
+    return this.prismaService.permission.findUnique({
       where: {
         id,
         deletedAt: null,
       },
     })
-
-    if (!permission) return null
-
-    return this.mapToPermissionType(permission)
   }
 
-  async create({
+  create({
     createdById,
     data,
   }: {
-    createdById: number
+    createdById: number | null
     data: CreatePermissionBodyType
   }): Promise<PermissionType> {
-    const permission = await this.prismaService.permission.create({
+    return this.prismaService.permission.create({
       data: {
         ...data,
         createdById,
       },
     })
-
-    return this.mapToPermissionType(permission)
   }
 
-  async update({
+  update({
     id,
     updatedById,
     data,
@@ -99,8 +71,8 @@ export class PermissionRepository implements IPermissionRepository {
     id: number
     updatedById: number
     data: UpdatePermissionBodyType
-  }): Promise<PermissionType> {
-    const permission = await this.prismaService.permission.update({
+  }): Promise<PermissionType & { roles: { id: number }[] }> {
+    return this.prismaService.permission.update({
       where: {
         id,
         deletedAt: null,
@@ -109,12 +81,13 @@ export class PermissionRepository implements IPermissionRepository {
         ...data,
         updatedById,
       },
+      include: {
+        roles: true,
+      },
     })
-
-    return this.mapToPermissionType(permission)
   }
 
-  async delete(
+  delete(
     {
       id,
       deletedById,
@@ -123,25 +96,28 @@ export class PermissionRepository implements IPermissionRepository {
       deletedById: number
     },
     isHard?: boolean,
-  ): Promise<PermissionType> {
-    const permission = isHard
-      ? await this.prismaService.permission.delete({
+  ): Promise<PermissionType & { roles: { id: number }[] }> {
+    return isHard
+      ? this.prismaService.permission.delete({
           where: {
             id,
           },
+          include: {
+            roles: true,
+          },
         })
-      : await this.prismaService.permission.update({
+      : this.prismaService.permission.update({
           where: {
             id,
             deletedAt: null,
           },
           data: {
             deletedAt: new Date(),
-            updatedById: deletedById,
-            deletedById: deletedById,
-          } as any,
+            deletedById,
+          },
+          include: {
+            roles: true,
+          },
         })
-
-    return this.mapToPermissionType(permission)
   }
 }

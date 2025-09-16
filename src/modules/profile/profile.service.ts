@@ -44,7 +44,7 @@ export class ProfileService {
   async changePassword({ userId, body }: { userId: number; body: Omit<ChangePasswordBodyType, 'confirmNewPassword'> }) {
     try {
       const { password, newPassword } = body
-      const user = await this.sharedUserRepository.findUserUnique({
+      const user = await this.sharedUserRepository.findUnique({
         id: userId,
       })
       if (!user) {

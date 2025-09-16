@@ -10,9 +10,10 @@ import {
   SendOTPBodyType,
   ForgotPasswordBodyType,
   LoginBodyType,
+  DisableTwoFactorBodyType,
 } from './models/auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
-import { ISharedUserRepository } from 'src/shared/repositories/shared-user.repo.interface'
+import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { addMilliseconds } from 'date-fns'
 import ms from 'ms'
 import { TypeOfVerificationCode, TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
@@ -32,6 +33,7 @@ import {
   UserNotFoundException,
   InvalidTOTPAndCodeException,
   InvalidTOTPException,
+  TOTPNotEnabledException,
 } from './models/auth.error.model'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 @Injectable()
@@ -43,7 +45,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly twoFactorAuthService: TwoFactorAuthService,
     @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
-    @Inject('ISharedUserRepository') private readonly sharedUserRepository: ISharedUserRepository,
+    private readonly sharedUserRepository: SharedUserRepository,
   ) {}
 
   async register(body: RegisterBodyType) {
@@ -52,7 +54,7 @@ export class AuthService {
       await this.validateVerificationCode(body.email, body.code, TypeOfVerificationCode.REGISTER)
 
       //2. check email already exists
-      const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email: body.email })
+      const checkEmailExist = await this.sharedUserRepository.findUnique({ email: body.email })
       if (checkEmailExist) {
         throw EmailAlreadyExistsException
       }
@@ -125,7 +127,7 @@ export class AuthService {
   }
   async login(body: LoginBodyType & { userAgent: string; ip: string }) {
     //1> check email exist in db
-    const checkEmailExist = await this.authRepository.findUserUniqueUserIncludeRole({ email: body.email })
+    const checkEmailExist = await this.authRepository.findUniqueUserIncludeRole({ email: body.email })
     if (!checkEmailExist) {
       throw EmailNotFoundException
     }
@@ -281,7 +283,7 @@ export class AuthService {
   async sendOTP(body: SendOTPBodyType) {
     const { email, type } = body
     //1. check email exist
-    const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email })
+    const checkEmailExist = await this.sharedUserRepository.findUnique({ email })
     if (checkEmailExist && type === TypeOfVerificationCode.REGISTER) {
       throw EmailAlreadyExistsException
     }
@@ -314,7 +316,7 @@ export class AuthService {
     const { email, code, newPassword } = body
 
     //1. check email exist
-    const checkEmailExist = await this.sharedUserRepository.findUserUnique({ email })
+    const checkEmailExist = await this.sharedUserRepository.findUnique({ email })
     if (!checkEmailExist) {
       throw EmailNotFoundException
     }
@@ -327,7 +329,7 @@ export class AuthService {
 
     //4. update new password and delete OTP code
     await Promise.all([
-      this.authRepository.updateUser({ id: checkEmailExist.id }, { password: hashingPassword }),
+      this.sharedUserRepository.update({ id: checkEmailExist.id }, { password: hashingPassword }),
       this.authRepository.deleteVerificationCode({
         email_type: {
           email,
@@ -343,7 +345,7 @@ export class AuthService {
 
   async setup2FA(userId: number) {
     //1. Kiểm tra xem user có tồn tại hay không? Và xem đã bật 2FA chưa
-    const checkUserExist = await this.sharedUserRepository.findUserUnique({ id: userId })
+    const checkUserExist = await this.sharedUserRepository.findUnique({ id: userId })
     if (!checkUserExist) {
       throw UserNotFoundException
     }
@@ -353,12 +355,47 @@ export class AuthService {
     //2. Tạo secret và url cho 2FA
     const { secret, uri } = this.twoFactorAuthService.generateTOTPSecret(checkUserExist.email)
     //3. Cập nhật secret vào user trong db
-    await this.authRepository.updateUser({ id: userId }, { totpSecret: secret })
+    await this.sharedUserRepository.update({ id: userId }, { totpSecret: secret })
     //4. Trả về secret và url cho client
 
     return {
       secret,
       uri: uri,
+    }
+  }
+
+  async disable2FA(data: DisableTwoFactorBodyType & { userId: number }) {
+    const { userId, totpCode, code } = data
+    // 1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và xem họ đã bật 2FA chưa
+    const user = await this.sharedUserRepository.findUnique({ id: userId })
+    if (!user) {
+      throw EmailNotFoundException
+    }
+    if (!user.totpSecret) {
+      throw TOTPNotEnabledException
+    }
+
+    // 2. Kiểm tra mã TOTP có hợp lệ hay không
+    if (totpCode) {
+      const isValid = this.twoFactorAuthService.isVerifyTOTP({
+        email: user.email,
+        secret: user.totpSecret,
+        code: totpCode,
+      })
+      if (!isValid) {
+        throw InvalidTOTPException
+      }
+    } else if (code) {
+      // 3. Kiểm tra mã OTP email có hợp lệ hay không
+      await this.validateVerificationCode(user.email, code, TypeOfVerificationCode.DISABLE_2FA)
+    }
+
+    // 4. Cập nhật secret thành null
+    await this.sharedUserRepository.update({ id: userId }, { totpSecret: null, updatedById: userId })
+
+    // 5. Trả về thông báo
+    return {
+      message: 'Tắt 2FA thành công',
     }
   }
 }

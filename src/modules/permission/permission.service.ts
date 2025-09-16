@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { CreatePermissionBodyType, GetPermissionQueryType, UpdatePermissionBodyType } from './models/permission.model'
+import { CreatePermissionBodyType, GetPermissionsQueryType, UpdatePermissionBodyType } from './models/permission.model'
 import { PermissionAlreadyExistsException, PermissionNotFoundException } from './models/permission.error.model'
 import { IPermissionRepository } from './repository/permission.repo.interface'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
@@ -8,7 +8,7 @@ import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared
 export class PermissionService {
   constructor(@Inject('IPermissionRepository') private readonly permissionRepository: IPermissionRepository) {}
 
-  async list(pagination: GetPermissionQueryType) {
+  async list(pagination: GetPermissionsQueryType) {
     const data = await this.permissionRepository.list(pagination)
     return data
   }
