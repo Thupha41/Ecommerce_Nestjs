@@ -9,6 +9,7 @@ import { AuthenticationGuard } from './guards/authentication.guard'
 import { SharedUserRepository } from './repositories/shared-user.repo'
 import { EmailService } from './services/email.service'
 import { TwoFactorAuthService } from './services/2fa.service'
+import { CacheModule } from '@nestjs/cache-manager'
 
 const sharedService = [
   PrismaService,
@@ -31,6 +32,12 @@ const sharedService = [
     },
   ],
   exports: [...sharedService, 'ISharedUserRepository'],
-  imports: [JwtModule],
+  imports: [
+    JwtModule,
+    CacheModule.register({
+      ttl: 60 * 60, // 1 hour
+      isGlobal: true,
+    }),
+  ],
 })
 export class SharedModule {}

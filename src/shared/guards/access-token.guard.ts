@@ -17,14 +17,18 @@ import { TokenService } from 'src/shared/services/token.service'
 import { IAccessTokenPayload } from 'src/shared/types/jwt.types'
 
 type Permission = RolePermissionsType['permissions'][number]
-// Định nghĩa kiểu dữ liệu cho role từ Prisma (có thể thiếu trường deletedById)
-type PrismaRole = Omit<RolePermissionsType, 'deletedById' | 'permissions'> & {
-  deletedById?: number | null
-  permissions: Permission[]
-}
-
 // Định nghĩa kiểu dữ liệu cho role đã cache
-type CachedRole = Omit<RolePermissionsType, 'permissions'> & {
+type CachedRole = {
+  id: number
+  name: string
+  description: string
+  isActive: boolean
+  createdById: number | null
+  updatedById: number | null
+  deletedById: number | null
+  deletedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
   permissions: {
     [key: string]: Permission
   }
@@ -77,7 +81,7 @@ export class AccessTokenGuard implements CanActivate {
     let cachedRole = await this.cacheManager.get<CachedRole>(cacheKey)
     // 2. Nếu không có trong cache, thì truy vấn từ cơ sở dữ liệu
     if (cachedRole === null) {
-      const role = (await this.prismaService.role
+      const role = await this.prismaService.role
         .findUniqueOrThrow({
           where: {
             id: roleId,
@@ -94,18 +98,26 @@ export class AccessTokenGuard implements CanActivate {
         })
         .catch(() => {
           throw new ForbiddenException()
-        })) as unknown as PrismaRole
+        })
 
       const permissionObject = keyBy(
         role.permissions,
         (permission) => `${permission.path}:${permission.method}`,
       ) as CachedRole['permissions']
-      // Chuyển đổi từ PrismaRole sang CachedRole
+      // Chuyển đổi sang CachedRole
       cachedRole = {
-        ...role,
-        deletedById: role.deletedById ?? null, // Đảm bảo trường này luôn có
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        isActive: role.isActive,
+        createdById: role.createdById,
+        updatedById: role.updatedById,
+        deletedById: null, // Gán giá trị mặc định
+        deletedAt: role.deletedAt,
+        createdAt: role.createdAt,
+        updatedAt: role.updatedAt,
         permissions: permissionObject,
-      } as CachedRole
+      }
       await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
 
       request[REQUEST_ROLE_PERMISSIONS] = role
