@@ -5,17 +5,17 @@ import { OAuth2Client } from 'google-auth-library'
 import { GoogleAuthStateType } from './models/auth.model'
 import { IAuthRepository } from './repository/auth.repo.interface'
 import { HashingService } from 'src/shared/services/hashing.service'
-import { RolesService } from './role.service'
 import { v4 as uuidv4 } from 'uuid'
 import { AuthService } from './auth.service'
 import { InvalidEmailException } from './models/auth.error.model'
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 @Injectable()
 export class GoogleService {
   private oauth2Client: OAuth2Client
   constructor(
     @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
     private readonly hashingService: HashingService,
-    private readonly roleService: RolesService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly authService: AuthService,
   ) {
     this.oauth2Client = new google.auth.OAuth2(
@@ -26,7 +26,6 @@ export class GoogleService {
   }
   private parseState(state: string): GoogleAuthStateType {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return state
         ? JSON.parse(Buffer.from(state, 'base64').toString('utf-8'))
         : { userAgent: 'Unknown', ip: 'Unknown' }
@@ -56,7 +55,7 @@ export class GoogleService {
 
     let user = await this.authRepository.findUniqueUserIncludeRole({ email: userInfo.email })
     if (!user) {
-      const clientRoleId = await this.roleService.getClientRoleId()
+      const clientRoleId = await this.sharedRoleRepository.getClientRoleId()
       const randomPassword = uuidv4()
       const hashingPassword = await this.hashingService.hash(randomPassword)
       user = await this.authRepository.createUserIncludeRole({

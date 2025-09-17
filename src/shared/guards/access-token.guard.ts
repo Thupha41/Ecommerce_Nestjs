@@ -17,18 +17,7 @@ import { TokenService } from 'src/shared/services/token.service'
 import { IAccessTokenPayload } from 'src/shared/types/jwt.types'
 
 type Permission = RolePermissionsType['permissions'][number]
-// Định nghĩa kiểu dữ liệu cho role đã cache
-type CachedRole = {
-  id: number
-  name: string
-  description: string
-  isActive: boolean
-  createdById: number | null
-  updatedById: number | null
-  deletedById: number | null
-  deletedAt: Date | null
-  createdAt: Date
-  updatedAt: Date
+type CachedRole = RolePermissionsType & {
   permissions: {
     [key: string]: Permission
   }
@@ -104,20 +93,7 @@ export class AccessTokenGuard implements CanActivate {
         role.permissions,
         (permission) => `${permission.path}:${permission.method}`,
       ) as CachedRole['permissions']
-      // Chuyển đổi sang CachedRole
-      cachedRole = {
-        id: role.id,
-        name: role.name,
-        description: role.description,
-        isActive: role.isActive,
-        createdById: role.createdById,
-        updatedById: role.updatedById,
-        deletedById: null, // Gán giá trị mặc định
-        deletedAt: role.deletedAt,
-        createdAt: role.createdAt,
-        updatedAt: role.updatedAt,
-        permissions: permissionObject,
-      }
+      cachedRole = { ...role, permissions: permissionObject }
       await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
 
       request[REQUEST_ROLE_PERMISSIONS] = role

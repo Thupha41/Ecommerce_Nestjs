@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from 'src/app.module'
 import { RoleName } from 'src/shared/constants/role.constants'
 import { HTTPMethod } from 'src/shared/constants/permission.constants'
+
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS']
@@ -29,19 +30,16 @@ async function bootstrap() {
             path,
             method,
             name: method + ' ' + path,
-            description: '',
             module: moduleName,
           }
         }
       })
       .filter((item) => item !== undefined)
-
   // Tạo object permissionInDbMap với key là [method-path]
   const permissionInDbMap: Record<string, (typeof permissionsInDb)[0]> = permissionsInDb.reduce((acc, item) => {
     acc[`${item.method}-${item.path}`] = item
     return acc
   }, {})
-
   // Tạo object availableRoutesMap với key là [method-path]
   const availableRoutesMap: Record<string, (typeof availableRoutes)[0]> = availableRoutes.reduce((acc, item) => {
     acc[`${item.method}-${item.path}`] = item
@@ -52,7 +50,6 @@ async function bootstrap() {
   const permissionsToDelete = permissionsInDb.filter((item) => {
     return !availableRoutesMap[`${item.method}-${item.path}`]
   })
-
   // Xóa permissions không tồn tại trong availableRoutes
   if (permissionsToDelete.length > 0) {
     const deleteResult = await prisma.permission.deleteMany({
@@ -70,11 +67,10 @@ async function bootstrap() {
   const routesToAdd = availableRoutes.filter((item) => {
     return !permissionInDbMap[`${item.method}-${item.path}`]
   })
-
   // Thêm các routes này dưới dạng permissions database
   if (routesToAdd.length > 0) {
     const permissionsToAdd = await prisma.permission.createMany({
-      data: routesToAdd.map((item) => ({ ...item, description: '' })),
+      data: routesToAdd,
       skipDuplicates: true,
     })
     console.log('Added permissions:', permissionsToAdd.count)
@@ -88,18 +84,12 @@ async function bootstrap() {
       deletedAt: null,
     },
   })
-
   const adminPermissionIds = updatedPermissionsInDb.map((item) => ({ id: item.id }))
-  // Xác định module dựa trên path
-  const getModuleFromPath = (path: string) => {
-    return String(path.split('/')[1]).toUpperCase()
-  }
-
   const sellerPermissionIds = updatedPermissionsInDb
-    .filter((item) => SellerModule.includes(getModuleFromPath(item.path)))
+    .filter((item) => SellerModule.includes(item.module))
     .map((item) => ({ id: item.id }))
   const clientPermissionIds = updatedPermissionsInDb
-    .filter((item) => ClientModule.includes(getModuleFromPath(item.path)))
+    .filter((item) => ClientModule.includes(item.module))
     .map((item) => ({ id: item.id }))
 
   await Promise.all([
@@ -129,7 +119,4 @@ const updateRole = async (permissionIds: { id: number }[], roleName: string) => 
     },
   })
 }
-bootstrap().catch((error) => {
-  console.error('Error during bootstrap:', error)
-  process.exit(1)
-})
+bootstrap()

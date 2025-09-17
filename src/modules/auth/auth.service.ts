@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
 import { isUniqueConstraintPrismaError, isNotFoundPrismaError, generateOTP } from 'src/shared/helpers'
-import { RolesService } from './role.service'
+
 import {
   RefreshTokenBodyType,
   LogoutBodyType,
@@ -36,12 +36,13 @@ import {
   TOTPNotEnabledException,
 } from './models/auth.error.model'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 @Injectable()
 export class AuthService {
   constructor(
     private readonly hashingService: HashingService,
     private readonly tokenService: TokenService,
-    private readonly roleService: RolesService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly emailService: EmailService,
     private readonly twoFactorAuthService: TwoFactorAuthService,
     @Inject('IAuthRepository') private readonly authRepository: IAuthRepository,
@@ -59,7 +60,7 @@ export class AuthService {
         throw EmailAlreadyExistsException
       }
       //3. Get client role id
-      const clientRoleId = await this.roleService.getClientRoleId()
+      const clientRoleId = await this.sharedRoleRepository.getClientRoleId()
 
       //4. hash password
       const hashingPassword = await this.hashingService.hash(body.password)
