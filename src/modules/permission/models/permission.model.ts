@@ -22,7 +22,7 @@ export const GetPermissionParamsSchema = z
   .strict()
 
 export const GetPermissionResSchema = z.object({
-  data: z.array(PermissionSchema),
+  items: z.array(PermissionSchema),
   totalItems: z.number(),
   page: z.number(),
   limit: z.number(),

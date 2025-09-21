@@ -12,6 +12,7 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
+import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
 @Controller('languages')
 @UseGuards(AccessTokenGuard)
@@ -23,6 +24,7 @@ export class LanguageController {
   @ApiResponse({ status: 200, description: 'Get all languages', type: GetLanguagesResDTO })
   @Get()
   @ZodSerializerDto(GetLanguagesResDTO)
+  @ResponseMessage('Language list successfully')
   findAll() {
     return this.languageService.findAll()
   }
@@ -31,6 +33,7 @@ export class LanguageController {
   @ApiResponse({ status: 200, description: 'Get language by id', type: GetLanguageDetailResDTO })
   @Get(':languageId')
   @ZodSerializerDto(GetLanguageDetailResDTO)
+  @ResponseMessage('Language found successfully')
   findById(@Param() params: GetLanguageParamsDTO) {
     return this.languageService.findById(params.languageId)
   }
@@ -39,6 +42,7 @@ export class LanguageController {
   @ApiResponse({ status: 200, description: 'Create language', type: GetLanguageDetailResDTO })
   @Post()
   @ZodSerializerDto(GetLanguageDetailResDTO)
+  @ResponseMessage('Language created successfully')
   create(@Body() body: CreateLanguageBodyDTO, @ActiveUser('userId') userId: number) {
     return this.languageService.create({
       data: body,
@@ -53,6 +57,7 @@ export class LanguageController {
   @ApiResponse({ status: 200, description: 'Update language', type: GetLanguageDetailResDTO })
   @Put(':languageId')
   @ZodSerializerDto(GetLanguageDetailResDTO)
+  @ResponseMessage('Language updated successfully')
   update(
     @Body() body: UpdateLanguageBodyDTO,
     @Param() params: GetLanguageParamsDTO,
@@ -69,6 +74,7 @@ export class LanguageController {
   @ApiResponse({ status: 200, description: 'Delete language', type: MessageResDTO })
   @Delete(':languageId')
   @ZodSerializerDto(MessageResDTO)
+  @ResponseMessage('Language deleted successfully')
   delete(@Param() params: GetLanguageParamsDTO) {
     return this.languageService.delete(params.languageId)
   }

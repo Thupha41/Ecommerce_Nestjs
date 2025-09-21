@@ -24,7 +24,7 @@ import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
 import { EmptyBodyDTO } from 'src/shared/dtos/request.dto'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
-
+import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -34,6 +34,7 @@ export class AuthController {
 
   @Post('register')
   @IsPublic()
+  @ResponseMessage('Register successfully')
   @ZodSerializerDto(RegisterResDTO)
   register(@Body() body: RegisterBodyDTO) {
     return this.authService.register(body)
@@ -48,7 +49,9 @@ export class AuthController {
 
   @Post('login')
   @IsPublic()
+  @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(LoginResDTO)
+  @ResponseMessage('Login successfully')
   login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.login({
       ...body,
@@ -71,6 +74,7 @@ export class AuthController {
 
   @Post('logout')
   @ZodSerializerDto(MessageResDTO)
+  @ResponseMessage('Logout successfully')
   logout(@Body() body: LogoutBodyDTO) {
     return this.authService.logout({
       refreshToken: body.refreshToken,

@@ -32,10 +32,9 @@ export class AccessTokenGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest()
+    const request = context.switchToHttp().getRequest<Request>()
     // Extract và validate token
     const decodedAccessToken = await this.extractAndValidateToken(request)
-
     // Check user permission
     await this.validateUserPermission(decodedAccessToken, request)
     return true
@@ -65,44 +64,53 @@ export class AccessTokenGuard implements CanActivate {
     const roleId: number = decodedAccessToken.roleId
     const path: string = request.route.path
     const method = request.method as keyof typeof HTTPMethod
-    const cacheKey = `role:${roleId}`
+    // const cacheKey = `role:${roleId}`
     // 1. Thử lấy từ cache
-    let cachedRole = await this.cacheManager.get<CachedRole>(cacheKey)
+    // let cachedRole = await this.cacheManager.get<CachedRole>(cacheKey)
     // 2. Nếu không có trong cache, thì truy vấn từ cơ sở dữ liệu
-    if (cachedRole === null) {
-      const role = await this.prismaService.role
-        .findUniqueOrThrow({
-          where: {
-            id: roleId,
-            deletedAt: null,
-            isActive: true,
-          },
-          include: {
-            permissions: {
-              where: {
-                deletedAt: null,
-              },
+    // if (cachedRole === null) {
+    const role = await this.prismaService.role
+      .findUniqueOrThrow({
+        where: {
+          id: roleId,
+          deletedAt: null,
+          isActive: true,
+        },
+        include: {
+          permissions: {
+            where: {
+              deletedAt: null,
             },
           },
-        })
-        .catch(() => {
-          throw new ForbiddenException()
-        })
+        },
+      })
+      .catch(() => {
+        throw new ForbiddenException("You don't have permission to access this resource")
+      })
+    // const permissionObject = keyBy(
+    //   role.permissions,
+    //   (permission) => `${permission.path}:${permission.method}`,
+    // ) as CachedRole['permissions']
+    // cachedRole = { ...role, permissions: permissionObject }
+    // await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
 
-      const permissionObject = keyBy(
-        role.permissions,
-        (permission) => `${permission.path}:${permission.method}`,
-      ) as CachedRole['permissions']
-      cachedRole = { ...role, permissions: permissionObject }
-      await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
-
-      request[REQUEST_ROLE_PERMISSIONS] = role
-    }
+    request[REQUEST_ROLE_PERMISSIONS] = role
+    // }
 
     // 3. Kiểm tra quyền truy cập
-    const canAccess: Permission | undefined = cachedRole?.permissions[`${path}:${method}`]
+    // const canAccess: Permission | undefined = cachedRole?.permissions[`${path}:${method}`]
+
+    const canAccess = role.permissions.some((permission) => {
+      // Kiểm tra xem permission.path có khớp với path hiện tại không
+      // Có thể sử dụng exact match hoặc pattern matching tùy nhu cầu
+      const pathMatches = permission.path === path
+      const methodMatches = permission.method === method
+
+      return pathMatches && methodMatches
+    })
+
     if (!canAccess) {
-      throw new ForbiddenException()
+      throw new ForbiddenException("You don't have permission to access this resource")
     }
   }
 }

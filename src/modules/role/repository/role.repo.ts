@@ -17,7 +17,7 @@ export class RoleRepo implements IRoleRepository {
   async list(pagination: GetRolesQueryType): Promise<GetRolesResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
-    const [totalItems, data] = await Promise.all([
+    const [totalItems, roles] = await Promise.all([
       this.prismaService.role.count({
         where: {
           deletedAt: null,
@@ -32,7 +32,7 @@ export class RoleRepo implements IRoleRepository {
       }),
     ])
     return {
-      data,
+      items: roles,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,

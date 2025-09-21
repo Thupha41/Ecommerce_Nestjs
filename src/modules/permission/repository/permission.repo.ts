@@ -16,7 +16,7 @@ export class PermissionRepository implements IPermissionRepository {
   async list(pagination: GetPermissionsQueryType): Promise<GetPermissionsResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
-    const [totalItems, data] = await Promise.all([
+    const [totalItems, permissions] = await Promise.all([
       this.prismaService.permission.count({
         where: {
           deletedAt: null,
@@ -31,7 +31,7 @@ export class PermissionRepository implements IPermissionRepository {
       }),
     ])
     return {
-      data,
+      items: permissions,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,

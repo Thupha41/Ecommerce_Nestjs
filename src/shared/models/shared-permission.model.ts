@@ -7,10 +7,7 @@ export const PermissionSchema = z.object({
     .string()
     .min(1, { message: 'Error.InvalidPermissionName' })
     .max(100, { message: 'Error.InvalidPermissionName' }),
-  description: z
-    .string()
-    .min(1, { message: 'Error.InvalidPermissionDescription' })
-    .max(255, { message: 'Error.InvalidPermissionDescription' }),
+  description: z.string(),
   path: z
     .string()
     .min(1, { message: 'Error.InvalidPermissionPath' })
@@ -28,6 +25,7 @@ export const PermissionSchema = z.object({
   createdById: z.number().nullable(),
   createdAt: z.date(),
   updatedById: z.number().nullable(),
+  deletedById: z.number().nullable(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
 })

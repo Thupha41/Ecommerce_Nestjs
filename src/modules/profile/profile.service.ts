@@ -63,9 +63,6 @@ export class ProfileService {
           updatedById: userId,
         },
       )
-      return {
-        message: 'Password changed successfully',
-      }
     } catch (error) {
       if (isUniqueConstraintPrismaError(error)) {
         throw NotFoundRecordException

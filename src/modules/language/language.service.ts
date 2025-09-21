@@ -12,7 +12,7 @@ export class LanguageService {
   async findAll() {
     const data = await this.languageRepo.findAll()
     return {
-      data,
+      items: data,
       totalItems: data.length,
     }
   }
@@ -58,10 +58,7 @@ export class LanguageService {
   async delete(id: string) {
     try {
       // hard delete
-      await this.languageRepo.delete(id, true)
-      return {
-        message: 'Delete successfully',
-      }
+      return await this.languageRepo.delete(id, true)
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw NotFoundRecordException

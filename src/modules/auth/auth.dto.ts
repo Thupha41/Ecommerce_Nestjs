@@ -13,16 +13,17 @@ import {
   SendOTPBodySchema,
   TwoFactorSetupResSchema,
 } from 'src/modules/auth/models/auth.model'
+import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
 export class RegisterBodyDTO extends createZodDto(RegisterBodySchema) {}
 
-export class RegisterResDTO extends createZodDto(RegisterResSchema) {}
+export class RegisterResDTO extends createResponseDTO(RegisterResSchema) {}
 
 export class SendOTPBodyDTO extends createZodDto(SendOTPBodySchema) {}
 
 export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
 
-export class LoginResDTO extends createZodDto(LoginResSchema) {}
+export class LoginResDTO extends createResponseDTO(LoginResSchema) {}
 
 export class RefreshTokenBodyDTO extends createZodDto(RefreshTokenBodySchema) {}
 

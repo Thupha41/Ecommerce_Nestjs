@@ -14,8 +14,9 @@ import {
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiParam, ApiQuery, ApiBody, ApiTags } from '@nestjs/swagger'
 import { PermissionService } from './permission.service'
+import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
-@Controller('permission')
+@Controller('permissions')
 @UseGuards(AccessTokenGuard)
 @ApiBearerAuth()
 @ApiTags('Permissions')
@@ -24,6 +25,7 @@ export class PermissionController {
 
   @Post('/')
   @ZodSerializerDto(GetPermissionDetailResDTO)
+  @ResponseMessage('Permission created successfully')
   @ApiBody({ type: CreatePermissionBodyDTO })
   async create(@Body() body: CreatePermissionBodyDTO, @ActiveUser('userId') userId: number) {
     return await this.permissionService.create({
@@ -34,6 +36,7 @@ export class PermissionController {
 
   @Get('/')
   @ZodSerializerDto(GetPermissionResDTO)
+  @ResponseMessage('Permission list successfully')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async list(@Query() query: GetPermissionQueryDTO) {
@@ -44,6 +47,7 @@ export class PermissionController {
   }
 
   @Get('/:permissionId')
+  @ResponseMessage('Permission found successfully')
   @ZodSerializerDto(GetPermissionDetailResDTO)
   @ApiParam({ name: 'permissionId', type: 'number', description: 'Permission ID' })
   async findById(@Param('') params: GetPermissionParamsDTO) {
@@ -52,6 +56,7 @@ export class PermissionController {
 
   @Put('/:permissionId')
   @ZodSerializerDto(GetPermissionDetailResDTO)
+  @ResponseMessage('Permission updated successfully')
   @ApiParam({ name: 'permissionId', type: 'number', description: 'Permission ID' })
   @ApiBody({ type: UpdatePermissionBodyDTO })
   async update(
@@ -68,6 +73,7 @@ export class PermissionController {
 
   @Delete('/:permissionId')
   @ZodSerializerDto(MessageResDTO)
+  @ResponseMessage('Permission deleted successfully')
   @ApiParam({ name: 'permissionId', type: 'number', description: 'Permission ID' })
   async delete(@Param() params: GetPermissionParamsDTO, @ActiveUser('userId') userId: number) {
     return await this.permissionService.delete({

@@ -1,4 +1,5 @@
 // Kiểm tra thử xem có file env hay chưa?
+// Lỗi import fs và path undefined, thêm thuộc tính esModuleInterop: true vào tsconfig.json
 import fs from 'fs'
 import path from 'path'
 import z from 'zod'

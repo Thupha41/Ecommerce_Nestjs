@@ -82,17 +82,17 @@ export class RoleService {
     }
   }
 
-  async delete({ id, deletedById }: { id: number; deletedById: number }) {
+  async delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean) {
     try {
       await this.verifyRole(id)
-      await this.roleRepo.delete({
-        id,
-        deletedById,
-      })
+      await this.roleRepo.delete(
+        {
+          id,
+          deletedById,
+        },
+        isHard,
+      )
       await this.cacheManager.del(`role:${id}`) // Xóa cache của role đã xóa
-      return {
-        message: 'Delete successfully',
-      }
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw NotFoundRecordException

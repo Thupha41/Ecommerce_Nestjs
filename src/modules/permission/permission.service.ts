@@ -41,16 +41,16 @@ export class PermissionService {
       if (isNotFoundPrismaError(error)) {
         throw PermissionNotFoundException
       }
+      if (isUniqueConstraintPrismaError(error)) {
+        throw PermissionAlreadyExistsException
+      }
       throw error
     }
   }
 
   async delete({ id, deletedById }: { id: number; deletedById: number }) {
     try {
-      await this.permissionRepository.delete({ id, deletedById }, true)
-      return {
-        message: 'Delete permission successfully',
-      }
+      return await this.permissionRepository.delete({ id, deletedById }, true)
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw PermissionNotFoundException

@@ -7,6 +7,7 @@ import { ChangePasswordBodyDTO, UpdateMeBodyDTO } from 'src/modules/profile/prof
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiParam, ApiBody, ApiTags } from '@nestjs/swagger'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
+import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 @Controller('profile')
 @UseGuards(AccessTokenGuard)
 @ApiBearerAuth()
@@ -17,6 +18,7 @@ export class ProfileController {
   @Get()
   @ApiParam({ name: 'userId', required: true, type: Number })
   @ZodSerializerDto(GetUserProfileResDTO)
+  @ResponseMessage('Profile found successfully')
   getProfile(@ActiveUser('userId') userId: number) {
     return this.profileService.getProfile(userId)
   }
@@ -25,6 +27,7 @@ export class ProfileController {
   @ApiParam({ name: 'userId', required: true, type: Number })
   @ApiBody({ type: UpdateMeBodyDTO })
   @ZodSerializerDto(UpdateProfileResDTO)
+  @ResponseMessage('Profile updated successfully')
   updateProfile(@Body() body: UpdateMeBodyDTO, @ActiveUser('userId') userId: number) {
     return this.profileService.updateProfile({
       userId,
@@ -36,6 +39,7 @@ export class ProfileController {
   @ApiParam({ name: 'userId', required: true, type: Number })
   @ApiBody({ type: ChangePasswordBodyDTO })
   @ZodSerializerDto(MessageResDTO)
+  @ResponseMessage('Password changed successfully')
   changePassword(@Body() body: ChangePasswordBodyDTO, @ActiveUser('userId') userId: number) {
     return this.profileService.changePassword({
       userId,

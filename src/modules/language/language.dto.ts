@@ -6,12 +6,13 @@ import {
   GetLanguagesResSchema,
   UpdateLanguageBodySchema,
 } from 'src/modules/language/models/language.model'
+import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
-export class GetLanguagesResDTO extends createZodDto(GetLanguagesResSchema) {}
+export class GetLanguagesResDTO extends createResponseDTO(GetLanguagesResSchema) {}
 
 export class GetLanguageParamsDTO extends createZodDto(GetLanguageParamsSchema) {}
 
-export class GetLanguageDetailResDTO extends createZodDto(GetLanguageDetailResSchema) {}
+export class GetLanguageDetailResDTO extends createResponseDTO(GetLanguageDetailResSchema) {}
 
 export class CreateLanguageBodyDTO extends createZodDto(CreateLanguageBodySchema) {}
 

@@ -15,6 +15,7 @@ import { CacheModule } from '@nestjs/cache-manager'
 import { LanguageModule } from './modules/language/language.module'
 import { ProfileModule } from './modules/profile/profile.module'
 import { UserModule } from './modules/user/user.module'
+import { TransformInterceptor } from './shared/interceptors/transform.interceptor'
 @Module({
   imports: [
     SharedModule,
@@ -31,6 +32,7 @@ import { UserModule } from './modules/user/user.module'
   providers: [
     AppService,
     // Custom validation pipe
+    // ensure zod DTOs actually validate incoming request data
     {
       provide: APP_PIPE,
       useClass: CustomZodValidationPipe,
@@ -38,7 +40,12 @@ import { UserModule } from './modules/user/user.module'
     // Serialize response dựa trên zod schema
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
 
-    //Xử lý lỗi khi serialize response
+    /*
+       Transform response theo dạng { data: T, statusCode: number }
+    */
+    { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
+
+    //Xử lý lỗi khi serialize response dựa trên zod schema
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,

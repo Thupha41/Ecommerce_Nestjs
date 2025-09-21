@@ -52,7 +52,7 @@ export class AuthService {
   async register(body: RegisterBodyType) {
     try {
       //1. validate verification code
-      await this.validateVerificationCode(body.email, body.code, TypeOfVerificationCode.REGISTER)
+      // await this.validateVerificationCode(body.email, body.code, TypeOfVerificationCode.REGISTER)
 
       //2. check email already exists
       const checkEmailExist = await this.sharedUserRepository.findUnique({ email: body.email })
@@ -74,12 +74,12 @@ export class AuthService {
           phoneNumber: body.phoneNumber,
           roleId: clientRoleId,
         }),
-        this.authRepository.deleteVerificationCode({
-          email_type: {
-            email: body.email,
-            type: TypeOfVerificationCode.REGISTER,
-          },
-        }),
+        // this.authRepository.deleteVerificationCode({
+        //   email_type: {
+        //     email: body.email,
+        //     type: TypeOfVerificationCode.REGISTER,
+        //   },
+        // }),
       ])
 
       return user
@@ -267,10 +267,6 @@ export class AuthService {
         await this.authRepository.updateDevice($deleteRefreshToken.deviceId, {
           isActive: false,
         })
-      }
-
-      return {
-        message: 'Logout successfully',
       }
     } catch (error) {
       console.log('>>> check refresh token error', error)

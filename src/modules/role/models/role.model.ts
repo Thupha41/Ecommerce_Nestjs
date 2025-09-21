@@ -7,7 +7,7 @@ export const RoleWithPermissionsSchema = RoleSchema.extend({
 })
 
 export const GetRolesResSchema = z.object({
-  data: z.array(RoleSchema),
+  items: z.array(RoleSchema),
   totalItems: z.number(),
   page: z.number(),
   limit: z.number(),
