@@ -16,6 +16,7 @@ import { LanguageModule } from './modules/language/language.module'
 import { ProfileModule } from './modules/profile/profile.module'
 import { UserModule } from './modules/user/user.module'
 import { TransformInterceptor } from './shared/interceptors/transform.interceptor'
+import { MediaModule } from './modules/media/media.module'
 @Module({
   imports: [
     SharedModule,
@@ -27,6 +28,7 @@ import { TransformInterceptor } from './shared/interceptors/transform.intercepto
     LanguageModule,
     ProfileModule,
     UserModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [

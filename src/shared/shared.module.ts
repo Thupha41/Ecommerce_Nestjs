@@ -11,6 +11,7 @@ import { EmailService } from 'src/shared/services/email.service'
 import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { CacheModule } from '@nestjs/cache-manager'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
+import { S3Service } from 'src/shared/services/s3.service'
 const sharedServices = [
   PrismaService,
   HashingService,
@@ -19,6 +20,7 @@ const sharedServices = [
   SharedUserRepository,
   SharedRoleRepository,
   TwoFactorAuthService,
+  S3Service,
 ]
 
 @Global()

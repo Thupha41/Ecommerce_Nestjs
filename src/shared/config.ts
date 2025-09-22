@@ -54,6 +54,15 @@ const configSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_USER: z.string(),
   DB_PORT: z.string(),
+
+  //MEDIA
+  PREFIX_STATIC_ENDPOINT: z.string(),
+
+  //S3
+  S3_ACCESS_KEY: z.string(),
+  S3_SECRET_KEY: z.string(),
+  S3_REGION: z.string(),
+  S3_BUCKET_NAME: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)
