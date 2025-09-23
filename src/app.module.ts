@@ -19,6 +19,8 @@ import { TransformInterceptor } from './shared/interceptors/transform.intercepto
 import { MediaModule } from './modules/media/media.module'
 import { BrandModule } from './modules/brand/brand.module'
 import { BrandTranslationModule } from './modules/brand/brand-translation/brand-translation.module'
+import { CategoryModule } from './modules/category/category.module'
+import { CategoryTranslationModule } from './modules/category/category-translation/category-translation.module'
 import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n'
 import path from 'path'
 @Module({
@@ -35,6 +37,8 @@ import path from 'path'
     MediaModule,
     BrandModule,
     BrandTranslationModule,
+    CategoryModule,
+    CategoryTranslationModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
