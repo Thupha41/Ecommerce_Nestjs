@@ -17,6 +17,10 @@ import { ProfileModule } from './modules/profile/profile.module'
 import { UserModule } from './modules/user/user.module'
 import { TransformInterceptor } from './shared/interceptors/transform.interceptor'
 import { MediaModule } from './modules/media/media.module'
+import { BrandModule } from './modules/brand/brand.module'
+import { BrandTranslationModule } from './modules/brand/brand-translation/brand-translation.module'
+import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n'
+import path from 'path'
 @Module({
   imports: [
     SharedModule,
@@ -29,6 +33,17 @@ import { MediaModule } from './modules/media/media.module'
     ProfileModule,
     UserModule,
     MediaModule,
+    BrandModule,
+    BrandTranslationModule,
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.resolve('src/i18n/'),
+        watch: true,
+      },
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
+      typesOutputPath: path.resolve('src/generated/i18n.generated.ts'),
+    }),
   ],
   controllers: [AppController],
   providers: [
