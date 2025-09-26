@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -13,13 +13,11 @@ import { CategoryService } from 'src/modules/category/category.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
-import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
 @Controller('categories')
 @ApiTags('Categories')
 @ApiBearerAuth()
-@UseGuards(AccessTokenGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
