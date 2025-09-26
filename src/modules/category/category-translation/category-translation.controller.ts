@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -10,13 +10,11 @@ import {
 import { CategoryTranslationService } from 'src/modules/category/category-translation/category-translation.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
-import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
 @Controller('category-translations')
 @ApiTags('Category Translations')
 @ApiBearerAuth()
-@UseGuards(AccessTokenGuard)
 export class CategoryTranslationController {
   constructor(private readonly categoryTranslationService: CategoryTranslationService) {}
 

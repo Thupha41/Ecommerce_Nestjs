@@ -13,13 +13,10 @@ import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { PaginationQueryDTO } from 'src/shared/dtos/request.dto'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiQuery, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
-import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
-import { UseGuards } from '@nestjs/common'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 @Controller('brands')
 @ApiTags('Brands')
 @ApiBearerAuth()
-@UseGuards(AccessTokenGuard)
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
   CreateLanguageBodyDTO,
@@ -9,17 +9,17 @@ import {
 } from 'src/modules/language/language.dto'
 import { LanguageService } from 'src/modules/language/language.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
-import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
 @Controller('languages')
-@UseGuards(AccessTokenGuard)
 @ApiBearerAuth()
 @ApiTags('Languages')
 export class LanguageController {
   constructor(private readonly languageService: LanguageService) {}
+  @IsPublic()
   @ApiOperation({ summary: 'Get all languages' })
   @ApiResponse({ status: 200, description: 'Get all languages', type: GetLanguagesResDTO })
   @Get()

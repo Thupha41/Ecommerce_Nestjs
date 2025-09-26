@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
   CreateBrandTranslationBodyDTO,
@@ -9,14 +9,12 @@ import {
 import { BrandTranslationService } from 'src/modules/brand/brand-translation/brand-translation.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
-import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ApiBearerAuth, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
 @Controller('brand-translations')
 @ApiTags('Brand Translations')
 @ApiBearerAuth()
-@UseGuards(AccessTokenGuard)
 export class BrandTranslationController {
   constructor(private readonly brandTranslationService: BrandTranslationService) {}
 
