@@ -26,6 +26,7 @@ import path from 'path'
 import { ProductModule } from './modules/product/product.module'
 import { ProductTranslationModule } from './modules/product/product-translation/product-translation.module'
 import { CartModule } from './modules/cart/cart.module'
+import { DeliveryInfoModule } from './modules/delivery-info/delivery-info.module'
 @Module({
   imports: [
     SharedModule,
@@ -45,6 +46,7 @@ import { CartModule } from './modules/cart/cart.module'
     ProductModule,
     ProductTranslationModule,
     CartModule,
+    DeliveryInfoModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {

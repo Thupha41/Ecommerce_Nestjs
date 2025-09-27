@@ -5,8 +5,29 @@ import { HTTPMethod } from 'src/shared/constants/permission.constants'
 
 import { PrismaService } from 'src/shared/services/prisma.service'
 
-const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS']
-const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS', 'BRAND', 'CATEGORY', 'LANGUAGE']
+const SellerModule = [
+  'AUTH',
+  'MEDIA',
+  'MANAGE-PRODUCT',
+  'PRODUCT-TRANSLATION',
+  'PROFILE',
+  'CART',
+  'ORDERS',
+  'REVIEWS',
+  'DELIVERY-INFO',
+]
+const ClientModule = [
+  'AUTH',
+  'MEDIA',
+  'PROFILE',
+  'CART',
+  'ORDERS',
+  'REVIEWS',
+  'BRAND',
+  'CATEGORY',
+  'LANGUAGE',
+  'DELIVERY-INFO',
+]
 const prisma = new PrismaService()
 
 async function bootstrap() {
