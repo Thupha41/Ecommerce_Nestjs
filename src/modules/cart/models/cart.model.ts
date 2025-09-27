@@ -1,3 +1,4 @@
+import { BrandSchema } from 'src/shared/models/shared-brand.model'
 import { ProductTranslationSchema } from 'src/shared/models/shared-product-translation.model'
 import { ProductSchema } from 'src/shared/models/shared-product.model'
 import { SKUSchema } from 'src/shared/models/shared-sku.model'
@@ -8,27 +9,43 @@ export const CartItemSchema = z.object({
   quantity: z.number(),
   skuId: z.number(),
   userId: z.number(),
-  user: z.number(),
-
   createdAt: z.date(),
   updatedAt: z.date(),
 })
 
-export const GetCartItemParamsSchema = z.object({
-  cartItemId: z.number(),
+// Schema cho kết quả trả về khi tạo cart item
+export const CartItemResponseSchema = CartItemSchema.extend({
+  // Thêm các trường khác nếu cần
 })
 
-export const CartItemDetailSchema = CartItemSchema.extend({
-  sku: SKUSchema.extend({
-    product: ProductSchema.extend({
-      productTranslations: z.array(ProductTranslationSchema),
-    }),
+export const GetCartItemParamsSchema = z.object({
+  cartItemId: z.coerce.number().int().positive(),
+})
+
+export const CartItemDetailSchema = z.object({
+  brand: BrandSchema.pick({
+    id: true,
+    name: true,
+    logo: true,
   }),
+  cartItems: z.array(
+    CartItemSchema.extend({
+      sku: SKUSchema.extend({
+        product: ProductSchema.extend({
+          productTranslations: z.array(ProductTranslationSchema),
+        }).omit({
+          brandId: true,
+        }),
+      }),
+    }),
+  ),
 })
 
 export const GetCartResSchema = z.object({
   items: z.array(CartItemDetailSchema),
-  totalItems: z.number(),
+  totalItems: z.number(), // Số lượng bản ghi cart item
+  cart_count_product: z.number(), // Tổng số lượng sản phẩm trong giỏ hàng
+  cart_total_price: z.number(), // Tổng giá trị giỏ hàng
   page: z.number(), // Số trang hiện tại
   limit: z.number(), // Số item trên 1 trang
   totalPages: z.number(), // Tổng số trang
@@ -50,6 +67,7 @@ export const DeleteCartBodySchema = z
   .strict()
 
 export type CartItemType = z.infer<typeof CartItemSchema>
+export type CartItemResponseType = z.infer<typeof CartItemResponseSchema>
 export type GetCartItemParamType = z.infer<typeof GetCartItemParamsSchema>
 export type CartItemDetailType = z.infer<typeof CartItemDetailSchema>
 export type GetCartResType = z.infer<typeof GetCartResSchema>

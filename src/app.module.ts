@@ -25,6 +25,7 @@ import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n'
 import path from 'path'
 import { ProductModule } from './modules/product/product.module'
 import { ProductTranslationModule } from './modules/product/product-translation/product-translation.module'
+import { CartModule } from './modules/cart/cart.module'
 @Module({
   imports: [
     SharedModule,
@@ -43,6 +44,7 @@ import { ProductTranslationModule } from './modules/product/product-translation/
     CategoryTranslationModule,
     ProductModule,
     ProductTranslationModule,
+    CartModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {

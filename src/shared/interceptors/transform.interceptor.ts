@@ -16,7 +16,11 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     const statusCode = response.statusCode
 
     // Lấy message từ metadata nếu có
-    const defaultMessage = this.reflector.get<string>('response_message', context.getHandler()) || 'Success'
+    const messageConfig = this.reflector.get<{ message: string; isTemplate: boolean }>(
+      'response_message',
+      context.getHandler(),
+    ) || { message: 'Success', isTemplate: false }
+    const { message: defaultMessage, isTemplate } = messageConfig
 
     return next.handle().pipe(
       map((result) => {
@@ -25,10 +29,19 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
           return result
         }
 
+        let finalMessage = defaultMessage
+
+        // Xử lý template message nếu cần
+        if (isTemplate && result && typeof result === 'object') {
+          finalMessage = defaultMessage.replace(/\{(\w+)\}/g, (match, key) => {
+            return result[key] !== undefined ? String(result[key]) : match
+          })
+        }
+
         return {
           data: result,
           statusCode,
-          message: defaultMessage,
+          message: finalMessage,
         }
       }),
     )
