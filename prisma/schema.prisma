@@ -18,6 +18,7 @@ model Language {
   productTranslations  ProductTranslation[]
   categoryTranslations CategoryTranslation[]
   brandTranslations    BrandTranslation[]
+  discountTranslations DiscountTranslation[]
 
   createdById Int?
   createdBy   User? @relation("LanguageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -83,6 +84,12 @@ model User {
   createdBrandTranslations    BrandTranslation[]    @relation("BrandTranslationCreatedBy")
   updatedBrandTranslations    BrandTranslation[]    @relation("BrandTranslationUpdatedBy")
   deletedBrandTranslations    BrandTranslation[]    @relation("BrandTranslationDeletedBy")
+  createdDiscountTranslations DiscountTranslation[] @relation("DiscountTranslationCreatedBy")
+  updatedDiscountTranslations DiscountTranslation[] @relation("DiscountTranslationUpdatedBy")
+  deletedDiscountTranslations DiscountTranslation[] @relation("DiscountTranslationDeletedBy")
+  createdDiscounts            Discount[]            @relation("DiscountCreatedBy")
+  updatedDiscounts            Discount[]            @relation("DiscountUpdatedBy")
+  deletedDiscounts            Discount[]            @relation("DiscountDeletedBy")
   createdOrders               Order[]               @relation("OrderCreatedBy")
   updatedOrders               Order[]               @relation("OrderUpdatedBy")
   deletedOrders               Order[]               @relation("OrderDeletedBy")
@@ -135,6 +142,41 @@ model DeliveryInfo {
 
   @@index([userId])
   @@index([isDefault])
+}
+
+model Discount {
+  id             Int             @id @default(autoincrement())
+  name           String          @db.VarChar(255)
+  description    String          @db.Text
+  value          Decimal         @db.Decimal(10, 2)
+  type           DiscountType
+  code           String          @unique @db.VarChar(50)
+  maxUses        Int             @default(0)
+  minQuantity    Int             @default(0)
+  usedCount      Int             @default(0)
+  maxUsesPerUser Int             @default(0)
+  startDate      DateTime
+  endDate        DateTime
+  minOrderValue  Decimal         @default(0) @db.Decimal(10, 2)
+  applyTo        DiscountApplyTo @default(ALL)
+  isActive       Boolean         @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById Int
+  createdBy   User?    @relation("DiscountCreatedBy", fields: [createdById], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  updatedById Int?
+  updatedBy   User?    @relation("DiscountUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  deletedById Int?
+  deletedBy   User?    @relation("DiscountDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  deletedAt            DateTime?
+  skus                 SKU[]
+  orders               Order[]
+  discountTranslations DiscountTranslation[]
+
+  @@index([code])
+  @@index([isActive])
 }
 
 model UserTranslation {
@@ -258,6 +300,7 @@ model Product {
   reviews             Review[]
   productTranslations ProductTranslation[]
   orders              Order[]
+
   productSKUSnapshots ProductSKUSnapshot[]
 
   createdById Int
@@ -355,6 +398,7 @@ model SKU {
   product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   cartItems           CartItem[]
   productSKUSnapshots ProductSKUSnapshot[]
+  discounts           Discount[]
 
   createdById Int
   createdBy   User  @relation("SKUCreatedBy", fields: [createdById], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -458,6 +502,7 @@ model Order {
   items       ProductSKUSnapshot[]
   products    Product[]
   reviews     Review[]
+  discounts   Discount[]
   /// [Receiver]
   receiver    Json
   shopId      Int?
@@ -554,6 +599,30 @@ model Message {
   createdAt DateTime  @default(now())
 }
 
+model DiscountTranslation {
+  id          Int      @id @default(autoincrement())
+  discountId  Int
+  discount    Discount @relation(fields: [discountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  languageId  String
+  language    Language @relation(fields: [languageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+
+  createdById Int?
+  createdBy   User? @relation("DiscountTranslationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedById Int?
+  updatedBy   User? @relation("DiscountTranslationUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  deletedById Int?
+  deletedBy   User? @relation("DiscountTranslationDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([deletedAt])
+  @@index([discountId])
+}
+
 enum PaymentStatus {
   PENDING
   SUCCESS
@@ -567,6 +636,16 @@ enum OrderStatus {
   DELIVERED
   RETURNED
   CANCELLED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum DiscountApplyTo {
+  ALL
+  SPECIFIC
 }
 
 enum VerificationCodeType {

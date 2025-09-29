@@ -4,7 +4,7 @@ import {
   GetBrandTranslationDetailResSchema,
   GetBrandTranslationParamsSchema,
   UpdateBrandTranslationBodySchema,
-} from 'src/modules/brand/brand-translation/models/brand-translation.model'
+} from 'src/modules/brand/models/brand-translation.model'
 import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
 export class GetBrandTranslationDetailResDTO extends createResponseDTO(GetBrandTranslationDetailResSchema) {}

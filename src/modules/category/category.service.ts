@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { CategoryRepo } from 'src/modules/category/category.repo'
-import { CreateCategoryBodyType, UpdateCategoryBodyType } from 'src/modules/category/category.model'
+import { CreateCategoryBodyType, UpdateCategoryBodyType } from 'src/modules/category/models/category.model'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { I18nContext } from 'nestjs-i18n'

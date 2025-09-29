@@ -4,7 +4,7 @@ import {
   CreateBrandTranslationBodyType,
   BrandTranslationType,
   UpdateBrandTranslationBodyType,
-} from 'src/modules/brand/brand-translation/models/brand-translation.model'
+} from 'src/modules/brand/models/brand-translation.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()

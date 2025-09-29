@@ -5,7 +5,7 @@ import {
   GetBrandParamsSchema,
   GetBrandsResSchema,
   UpdateBrandBodySchema,
-} from 'src/modules/brand/brand.model'
+} from 'src/modules/brand/models/brand.model'
 import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
 export class GetBrandsResDTO extends createResponseDTO(GetBrandsResSchema) {}

@@ -5,7 +5,7 @@ import {
   UpdateCategoryBodyType,
   CategoryType,
   CategoryIncludeTranslationType,
-} from 'src/modules/category/category.model'
+} from 'src/modules/category/models/category.model'
 import { ALL_LANGUAGE_CODE } from 'src/shared/constants/other.constant'
 import { PrismaService } from 'src/shared/services/prisma.service'
 

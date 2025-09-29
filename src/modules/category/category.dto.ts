@@ -6,7 +6,7 @@ import {
   GetAllCategoriesResSchema,
   UpdateCategoryBodySchema,
   GetAllCategoriesQuerySchema,
-} from 'src/modules/category/category.model'
+} from 'src/modules/category/models/category.model'
 import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
 export class GetAllCategoriesResDTO extends createResponseDTO(GetAllCategoriesResSchema) {}
