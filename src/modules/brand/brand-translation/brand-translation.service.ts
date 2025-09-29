@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 import { BrandTranslationRepo } from 'src/modules/brand/brand-translation/brand-translation.repo'
-import { BrandTranslationAlreadyExistsException } from 'src/modules/brand/brand-translation/models/brand-translation.error.model'
+import { BrandTranslationAlreadyExistsException } from 'src/modules/brand/models/brand-translation.error.model'
 import {
   CreateBrandTranslationBodyType,
   UpdateBrandTranslationBodyType,
-} from 'src/modules/brand/brand-translation/models/brand-translation.model'
+} from 'src/modules/brand/models/brand-translation.model'
 
 @Injectable()
 export class BrandTranslationService {

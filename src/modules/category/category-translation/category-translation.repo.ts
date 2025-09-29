@@ -4,7 +4,7 @@ import {
   CreateCategoryTranslationBodyType,
   CategoryTranslationType,
   UpdateCategoryTranslationBodyType,
-} from 'src/modules/category/category-translation/models/category-translation.model'
+} from 'src/modules/category/models/category-translation.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()

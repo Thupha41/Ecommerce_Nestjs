@@ -11,6 +11,13 @@ export const SortBy = {
   Price: 'price',
   CreatedAt: 'createdAt',
   Sale: 'sale',
+  MinQuantity: 'minQuantity',
+  MinOrderValue: 'minOrderValue',
+  MaxUses: 'maxUses',
+  MaxUsesPerUser: 'maxUsesPerUser',
+  StartDate: 'startDate',
+  EndDate: 'endDate',
+  Value: 'value',
 } as const
 
 export const PREFIX_PAYMENT_CODE = 'DH'

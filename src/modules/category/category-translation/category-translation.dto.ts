@@ -4,7 +4,7 @@ import {
   GetCategoryTranslationDetailResSchema,
   GetCategoryTranslationParamsSchema,
   UpdateCategoryTranslationBodySchema,
-} from 'src/modules/category/category-translation/models/category-translation.model'
+} from 'src/modules/category/models/category-translation.model'
 import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
 export class GetCategoryTranslationDetailResDTO extends createResponseDTO(GetCategoryTranslationDetailResSchema) {}

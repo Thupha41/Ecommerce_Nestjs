@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { BrandRepo } from 'src/modules/brand/brand.repo'
-import { CreateBrandBodyType, UpdateBrandBodyType } from 'src/modules/brand/brand.model'
+import { CreateBrandBodyType, UpdateBrandBodyType } from 'src/modules/brand/models/brand.model'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { PaginationQueryType } from 'src/shared/models/request.model'
