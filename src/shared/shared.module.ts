@@ -13,6 +13,7 @@ import { CacheModule } from '@nestjs/cache-manager'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 import { S3Service } from 'src/shared/services/s3.service'
 import { PaymentAPIKeyGuard } from 'src/shared/guards/payment-api-key.guard'
+import { SharedPaymentRepository } from 'src/shared/repositories/shared-payment.repo'
 const sharedServices = [
   PrismaService,
   HashingService,
@@ -20,6 +21,7 @@ const sharedServices = [
   EmailService,
   SharedUserRepository,
   SharedRoleRepository,
+  SharedPaymentRepository,
   TwoFactorAuthService,
   S3Service,
 ]

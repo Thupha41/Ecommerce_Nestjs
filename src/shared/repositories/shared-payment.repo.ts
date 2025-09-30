@@ -21,7 +21,7 @@ export class SharedPaymentRepository {
       },
     })
     if (!payment) {
-      throw Error('Payment not found')
+      throw Error('Payment not found') //Khi quăng lỗi thì sẽ xóa job khỏi queue
     }
     const { orders } = payment
     const productSKUSnapshots = orders.map((order) => order.items).flat()
@@ -38,7 +38,7 @@ export class SharedPaymentRepository {
           status: OrderStatus.CANCELLED,
         },
       })
-
+      // Khi thanh toan that bai thi se tra ve stock cho tung sku
       const updateSkus$ = Promise.all(
         productSKUSnapshots
           .filter((item) => item.skuId)
