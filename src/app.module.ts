@@ -29,6 +29,8 @@ import { CartModule } from './modules/cart/cart.module'
 import { DeliveryInfoModule } from './modules/delivery-info/delivery-info.module'
 import { DiscountModule } from './modules/discount/discount.module'
 import { DiscountTranslationModule } from './modules/discount/discount-translation/discount-translation.module'
+import { OrderModule } from './modules/order/order.module'
+import { PaymentModule } from './modules/payment/payment.module'
 @Module({
   imports: [
     SharedModule,
@@ -51,6 +53,8 @@ import { DiscountTranslationModule } from './modules/discount/discount-translati
     DeliveryInfoModule,
     DiscountModule,
     DiscountTranslationModule,
+    OrderModule,
+    PaymentModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
