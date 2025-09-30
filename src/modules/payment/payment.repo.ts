@@ -6,10 +6,14 @@ import { PREFIX_PAYMENT_CODE } from 'src/shared/constants/other.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
 import { OrderIncludeProductSKUSnapshotType } from 'src/shared/models/shared-order.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
+import { PaymentProducer } from './payment.producer'
 
 @Injectable()
 export class PaymentRepo {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly paymentProducer: PaymentProducer,
+  ) {}
 
   private getTotalPrice(orders: OrderIncludeProductSKUSnapshotType[]): number {
     return orders.reduce((total, order) => {
@@ -106,6 +110,7 @@ export class PaymentRepo {
             status: OrderStatus.PENDING_PICKUP,
           },
         }),
+        this.paymentProducer.removeJob(paymentId),
       ])
       return userId
     })

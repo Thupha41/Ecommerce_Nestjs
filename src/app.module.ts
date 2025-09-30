@@ -69,10 +69,7 @@ import envConfig from './shared/config'
     }),
     BullModule.forRoot({
       connection: {
-        host: envConfig.REDIS_HOST,
-        port: Number(envConfig.REDIS_PORT),
-        username: envConfig.REDIS_USERNAME,
-        password: envConfig.REDIS_PASSWORD,
+        url: envConfig.REDIS_URL,
       },
     }),
   ],
