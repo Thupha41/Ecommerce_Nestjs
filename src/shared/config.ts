@@ -27,7 +27,7 @@ const configSchema = z.object({
 
   REFRESH_TOKEN_EXPIRES_IN: z.string(),
 
-  SECRET_API_KEY: z.string(),
+  PAYMENT_API_KEY: z.string(),
 
   ADMIN_EMAIL: z.string(),
 

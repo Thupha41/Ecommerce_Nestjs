@@ -4,7 +4,7 @@ import { ApiBody, ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger'
 import { Body, Controller, Post } from '@nestjs/common'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { IsPublic } from 'src/shared/decorators/auth.decorator'
+import { Auth } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 
 @Controller('payment')
@@ -16,7 +16,7 @@ export class PaymentController {
   @Post('receiver')
   @ApiBody({ type: WebhookPaymentBodyDTO })
   @ApiOperation({ summary: 'Webhook payment' })
-  @IsPublic()
+  @Auth(['PaymentAPIKey'])
   @ZodSerializerDto(MessageResDTO)
   @ResponseMessage('Payment received successfully')
   receiver(@Body() body: WebhookPaymentBodyDTO) {

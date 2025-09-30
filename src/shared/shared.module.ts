@@ -12,6 +12,7 @@ import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { CacheModule } from '@nestjs/cache-manager'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 import { S3Service } from 'src/shared/services/s3.service'
+import { PaymentAPIKeyGuard } from 'src/shared/guards/payment-api-key.guard'
 const sharedServices = [
   PrismaService,
   HashingService,
@@ -28,6 +29,7 @@ const sharedServices = [
   providers: [
     ...sharedServices,
     AccessTokenGuard,
+    PaymentAPIKeyGuard,
     {
       provide: APP_GUARD,
       useClass: AuthenticationGuard,
