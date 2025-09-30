@@ -31,6 +31,8 @@ import { DiscountModule } from './modules/discount/discount.module'
 import { DiscountTranslationModule } from './modules/discount/discount-translation/discount-translation.module'
 import { OrderModule } from './modules/order/order.module'
 import { PaymentModule } from './modules/payment/payment.module'
+import { BullModule } from '@nestjs/bullmq'
+import { PaymentConsumer } from './queues/payment.consumer'
 @Module({
   imports: [
     SharedModule,
@@ -64,6 +66,14 @@ import { PaymentModule } from './modules/payment/payment.module'
       resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
       typesOutputPath: path.resolve('src/generated/i18n.generated.ts'),
     }),
+    BullModule.forRoot({
+      connection: {
+        host: 'redis-11573.crce194.ap-seast-1-1.ec2.redns.redis-cloud.com',
+        port: 11573,
+        username: 'default',
+        password: 'Q8prR2t9XM6yvdi2aRF5EqlapvCAgb6D',
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -92,6 +102,7 @@ import { PaymentModule } from './modules/payment/payment.module'
       provide: APP_FILTER,
       useClass: CatchEverythingFilter,
     },
+    PaymentConsumer,
   ],
 })
 export class AppModule {}
