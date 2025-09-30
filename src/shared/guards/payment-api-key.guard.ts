@@ -6,8 +6,8 @@ import { Request } from 'express'
 export class PaymentAPIKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>()
-    const xApiKey = request.headers['payment-api-key'] as string | undefined
-    if (xApiKey !== envConfig.PAYMENT_API_KEY) {
+    const paymentApiKey = request.headers['authorization']?.split(' ')[1]
+    if (paymentApiKey !== envConfig.PAYMENT_API_KEY) {
       throw new UnauthorizedException('No api key provided')
     }
     return true
