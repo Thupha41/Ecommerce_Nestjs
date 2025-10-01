@@ -14,6 +14,7 @@ import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 import { S3Service } from 'src/shared/services/s3.service'
 import { PaymentAPIKeyGuard } from 'src/shared/guards/payment-api-key.guard'
 import { SharedPaymentRepository } from 'src/shared/repositories/shared-payment.repo'
+import { SharedWebSocketRepository } from 'src/shared/repositories/shared-websocket.repo'
 const sharedServices = [
   PrismaService,
   HashingService,
@@ -22,6 +23,7 @@ const sharedServices = [
   SharedUserRepository,
   SharedRoleRepository,
   SharedPaymentRepository,
+  SharedWebSocketRepository,
   TwoFactorAuthService,
   S3Service,
 ]
