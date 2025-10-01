@@ -8,6 +8,7 @@ import helmet from 'helmet'
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true })
+  app.set('trust proxy', 'loopback')
   app.enableCors()
   app.use(helmet())
   patchNestJsSwagger()

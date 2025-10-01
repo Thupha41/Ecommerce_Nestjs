@@ -28,7 +28,6 @@ export class ProductController {
     })
   }
 
-  @SkipThrottle({ default: false })
   @Get(':productId')
   @ZodSerializerDto(GetProductDetailResDTO)
   @ResponseMessage('Product fetched successfully')
