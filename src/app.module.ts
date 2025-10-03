@@ -36,6 +36,7 @@ import { PaymentConsumer } from './queues/payment.consumer'
 import envConfig from './shared/config'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard'
+import { ReviewModule } from './modules/review/review.module'
 @Module({
   imports: [
     SharedModule,
@@ -60,6 +61,7 @@ import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-prox
     DiscountTranslationModule,
     OrderModule,
     PaymentModule,
+    ReviewModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {

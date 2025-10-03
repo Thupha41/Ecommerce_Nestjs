@@ -14,6 +14,7 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
+import { SkipThrottle } from '@nestjs/throttler'
 
 @Controller('categories')
 @ApiTags('Categories')
@@ -23,6 +24,7 @@ export class CategoryController {
 
   @Get()
   @IsPublic()
+  @SkipThrottle()
   @ZodSerializerDto(GetAllCategoriesResDTO)
   @ResponseMessage('Categories fetched successfully')
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -35,6 +37,7 @@ export class CategoryController {
 
   @Get(':categoryId')
   @IsPublic()
+  @SkipThrottle()
   @ZodSerializerDto(GetCategoryDetailResDTO)
   @ResponseMessage('Category fetched successfully')
   @ApiParam({ name: 'categoryId', required: true, type: Number })
