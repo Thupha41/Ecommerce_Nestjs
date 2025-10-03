@@ -37,6 +37,7 @@ import envConfig from './shared/config'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard'
 import { ReviewModule } from './modules/review/review.module'
+import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronjob'
 @Module({
   imports: [
     SharedModule,
@@ -123,6 +124,7 @@ import { ReviewModule } from './modules/review/review.module'
       useClass: ThrottlerBehindProxyGuard,
     },
     PaymentConsumer,
+    RemoveRefreshTokenCronjob
   ],
 })
 export class AppModule {}
