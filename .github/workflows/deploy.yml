@@ -23,19 +23,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image (no push)
+      - name: Compute PR tag
+        id: prmeta
+        run: echo "tag=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+
+      - name: Build image (no push, load to daemon)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: false
-          tags: ${{ env.IMAGE_REF }}:pr-${{ github.event.pull_request.number }}
+          load: true
+          tags: prtest:${{ steps.prmeta.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Run tests inside container
-        run: |
-          docker run --rm ${{ env.IMAGE_REF }}:pr-${{ github.event.pull_request.number }} npm run test
+        run: docker run --rm prtest:${{ steps.prmeta.outputs.tag }} npm run test
+
 
   cd_main:
     if: github.event_name == 'push'
