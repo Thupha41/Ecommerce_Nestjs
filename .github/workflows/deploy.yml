@@ -44,6 +44,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # - name: Run tests inside container
+      #   run: docker run --rm prtest:${{ steps.prmeta.outputs.tag }} npm run test
+
 
   cd_main:
     if: github.event_name == 'push'
@@ -61,8 +64,13 @@ jobs:
         id: meta
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
-          echo "tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "image_ref=${{ env.IMAGE_REF }}" >> $GITHUB_OUTPUT
+          echo "tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+          REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
+          IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
+
+          echo "image_ref=${REG_LOWER}/${IMG_LOWER}" >> "$GITHUB_OUTPUT"
+
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -72,7 +80,7 @@ jobs:
           echo "${{ secrets.DOCKER_TOKEN }}" | docker login ${{ secrets.DOCKER_REGISTRY }} \
             -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Create .env (heredoc)
+      - name: Create .env 
         run: |
           cat <<'EOF' > .env
           ${{ secrets.ENV_PRODUCTION }}
