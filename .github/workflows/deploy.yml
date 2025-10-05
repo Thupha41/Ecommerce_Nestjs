@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HOST: ${{ secrets.EC2_PUBLIC_IP }}
-      USER: ${{ secrets.EC2_USER }}
+      REMOTE_USER: ${{ secrets.EC2_USER }}
       TAG:  ${{ needs.cd_main.outputs.tag }}
     steps:
       - name: Compute registry/image (lowercase)
@@ -189,8 +189,8 @@ jobs:
 
       - name: Copy deploy script to server
         run: |
-          scp -i key.pem ./deploy.sh "$USER@$HOST:/tmp/deploy.sh"
+          scp -i key.pem ./deploy.sh "$REMOTE_USER@$HOST:/tmp/deploy.sh"
 
       - name: Run deploy script on server
         run: |
-          ssh -i key.pem "$USER@$HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
+          ssh -i key.pem "$REMOTE_USER@$HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
