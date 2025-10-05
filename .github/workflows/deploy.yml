@@ -106,9 +106,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -euxo pipefail
+
+            REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
+            IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
             
-            REGISTRY="${{ secrets.DOCKER_REGISTRY }}"
-            IMAGE_REF="${{ needs.cd_main.outputs.image_ref }}"
+            REGISTRY="${{ REG_LOWER }}"
+            IMAGE_REF="${{ REG_LOWER }}/${{ IMG_LOWER }}"
             TAG="${{ needs.cd_main.outputs.tag }}"
 
             if [ "$(id -u)" -eq 0 ]; then
