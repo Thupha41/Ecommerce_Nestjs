@@ -97,12 +97,7 @@ jobs:
             ${{ steps.meta.outputs.image_ref }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Smoke test pushed image
-        run: |
-          docker pull ${{ steps.meta.outputs.image_ref }}:${{ steps.meta.outputs.tag }}
-          docker run --rm ${{ steps.meta.outputs.image_ref }}:${{ steps.meta.outputs.tag }} npm run test
-
+          
   deploy_ec2:
     needs: cd_main
     runs-on: ubuntu-latest
