@@ -63,6 +63,9 @@ import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronj
     OrderModule,
     PaymentModule,
     ReviewModule,
+    CacheModule.register({
+      isGlobal: true,
+    }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -124,7 +127,7 @@ import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronj
       useClass: ThrottlerBehindProxyGuard,
     },
     PaymentConsumer,
-    RemoveRefreshTokenCronjob
+    RemoveRefreshTokenCronjob,
   ],
 })
 export class AppModule {}
