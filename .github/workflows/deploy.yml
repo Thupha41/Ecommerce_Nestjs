@@ -27,7 +27,7 @@ jobs:
         id: prmeta
         run: echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
 
-      - name: Create .env
+      - name: Create .env (not used at runtime, but kept for your build if needed)
         run: |
           printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
 
@@ -72,7 +72,7 @@ jobs:
           echo "${{ secrets.DOCKER_TOKEN }}" | docker login "$REG_LOWER" \
             -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Create .env
+      - name: Create .env (not used at runtime, but kept for your build if needed)
         run: |
           printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
 
@@ -92,9 +92,9 @@ jobs:
     needs: cd_main
     runs-on: ubuntu-latest
     env:
-      REMOTE_HOST: ${{ secrets.EC2_PUBLIC_DNS }}   # dùng DNS nhất quán
+      REMOTE_HOST: ${{ secrets.EC2_PUBLIC_DNS }}
       REMOTE_USER: ${{ secrets.EC2_USER }}
-      TAG:  ${{ needs.cd_main.outputs.tag }}
+      TAG:         ${{ needs.cd_main.outputs.tag }}
     steps:
       - name: Compute registry/image (lowercase)
         id: reg
@@ -118,7 +118,7 @@ jobs:
           ssh-keyscan -T 10 -p 22 -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
-      - name: Create deploy script locally
+      - name: Create deploy script locally (docker run only)
         run: |
           printf '%s\n' "#!/usr/bin/env bash
           set -euxo pipefail
@@ -126,6 +126,8 @@ jobs:
           REGISTRY='${{ steps.reg.outputs.reg }}'
           IMAGE_REF='${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}'
           TAG='${{ env.TAG }}'
+
+          APP_NAME='ecom-app'
 
           if [ \"\$(id -u)\" -eq 0 ]; then SUDO=\"\"; else SUDO=\"sudo\"; fi
 
@@ -175,25 +177,23 @@ jobs:
           ensure_docker
           start_docker_with_retries
 
-          set +x
+          # Login & pull (ẩn token khỏi log của action ở bước trước)
           echo '${{ secrets.DOCKER_TOKEN }}' | \$SUDO docker login \"\$REGISTRY\" -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin
-          set -x
-
           \$SUDO docker pull \"\${IMAGE_REF}:\${TAG}\"
 
-          export IMAGE_TAG=\"\${TAG}\"
-          export IMAGE_REF=\"\${IMAGE_REF}\"
+          if \$SUDO docker ps -a --format '{{.Names}}' | grep -q \"^\\\${APP_NAME}\$\"; then
+            \$SUDO docker rm -f \"\${APP_NAME}\" || true
+          fi
 
-          \$SUDO docker compose version
-          \$SUDO docker compose -f /opt/app/docker-compose.yml pull
-          \$SUDO docker compose -f /opt/app/docker-compose.yml up -d
+          \$SUDO docker run -d --name \"\${APP_NAME}\" \
+            --restart unless-stopped \
+            \"\${IMAGE_REF}:\${TAG}\"
+
+          \$SUDO docker image prune -f || true
           " > deploy.sh
           chmod +x deploy.sh
 
-      - name: Copy deploy script to server
+      - name: Copy & run deploy script on server
         run: |
           scp -i ~/.ssh/ci_key ./deploy.sh "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy.sh"
-
-      - name: Run deploy script on server
-        run: |
           ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
