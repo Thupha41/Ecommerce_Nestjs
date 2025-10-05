@@ -114,24 +114,24 @@ jobs:
           ssh-keyscan -T 10 -p 22 -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
-      - name: Write runtime .env for EC2
+      - name: Write .env for EC2
         run: |
-          echo "IMAGE_REF=${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}" > runtime.env
-          echo "TAG=${{ env.TAG }}" >> runtime.env
-          # thêm các runtime secrets khác nếu cần:
-          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> runtime.env
+          echo "IMAGE_REF=${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}" > .env
+          echo "TAG=${{ env.TAG }}" >> .env
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> .env
 
-      - name: Upload compose + env
+      - name: Upload compose + .env
         run: |
-          ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" "sudo mkdir -p /opt/app && sudo chown $REMOTE_USER:$REMOTE_USER /opt/app"
+          ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" \
+            "sudo mkdir -p /opt/app && sudo chown $REMOTE_USER:$REMOTE_USER /opt/app"
           scp -i ~/.ssh/ci_key ./docker-compose.yml "$REMOTE_USER@$REMOTE_HOST:/opt/app/docker-compose.yml"
-          scp -i ~/.ssh/ci_key ./runtime.env         "$REMOTE_USER@$REMOTE_HOST:/opt/app/.env"
+          scp -i ~/.ssh/ci_key ./.env                 "$REMOTE_USER@$REMOTE_HOST:/opt/app/.env"
 
-      - name: Deploy with compose on EC2
+      - name: Deploy with compose on EC2 (reads /opt/app/.env)
         run: |
           ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" bash -c "'
             set -eux
-            if command -v docker >/dev/null 2>&1; then :; else
+            if ! command -v docker >/dev/null 2>&1; then
               sudo apt-get update -y
               sudo apt-get install -y ca-certificates curl gnupg lsb-release
               sudo install -m 0755 -d /etc/apt/keyrings
@@ -145,6 +145,6 @@ jobs:
             echo \"${{ secrets.DOCKER_TOKEN }}\" | sudo docker login \"\$REG\" -u \"${{ secrets.DOCKER_USERNAME }}\" --password-stdin
 
             cd /opt/app
-            sudo --preserve-env=IMAGE_REF,TAG docker compose pull
-            sudo --preserve-env=IMAGE_REF,TAG docker compose up -d
+            sudo docker compose pull
+            sudo docker compose up -d
           '"
