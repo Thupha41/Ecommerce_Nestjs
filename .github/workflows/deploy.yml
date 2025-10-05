@@ -159,9 +159,7 @@ jobs:
 
           \$SUDO docker pull \"\${IMAGE_REF}:\${TAG}\"
 
-          if \$SUDO docker ps -a --format '{{.Names}}' | grep -q \"^\\\${APP_NAME}\$\"; then
-            \$SUDO docker rm -f \"\${APP_NAME}\" || true
-          fi
+          \$SUDO docker rm -f \"\${APP_NAME}\" || true
 
           \$SUDO docker run -d --name \"\${APP_NAME}\" \
             --restart unless-stopped \
