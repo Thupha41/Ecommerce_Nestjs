@@ -18,7 +18,7 @@ export interface IPermissionRepository {
     id: number
     updatedById: number
     data: UpdatePermissionBodyType
-  }): Promise<PermissionType>
+  }): Promise<PermissionType & { roles: { id: number }[] }>
   delete(
     {
       id,
@@ -28,5 +28,5 @@ export interface IPermissionRepository {
       deletedById: number
     },
     isHard?: boolean,
-  ): Promise<PermissionType>
+  ): Promise<PermissionType & { roles: { id: number }[] }>
 }

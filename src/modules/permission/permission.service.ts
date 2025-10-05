@@ -3,11 +3,23 @@ import { CreatePermissionBodyType, GetPermissionsQueryType, UpdatePermissionBody
 import { PermissionAlreadyExistsException, PermissionNotFoundException } from './models/permission.error.model'
 import { IPermissionRepository } from './repository/permission.repo.interface'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Cache } from 'cache-manager'
 
 @Injectable()
 export class PermissionService {
-  constructor(@Inject('IPermissionRepository') private readonly permissionRepository: IPermissionRepository) {}
-
+  constructor(
+    @Inject('IPermissionRepository') private readonly permissionRepository: IPermissionRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
+  deleteCachedRole(roles: { id: number }[]) {
+    return Promise.all(
+      roles.map((role) => {
+        const cacheKey = `role:${role.id}`
+        return this.cacheManager.del(cacheKey)
+      }),
+    )
+  }
   async list(pagination: GetPermissionsQueryType) {
     const data = await this.permissionRepository.list(pagination)
     return data
@@ -36,6 +48,8 @@ export class PermissionService {
   async update({ id, updatedById, data }: { id: number; updatedById: number; data: UpdatePermissionBodyType }) {
     try {
       const permission = await this.permissionRepository.update({ id, updatedById, data })
+      const { roles } = permission
+      await this.deleteCachedRole(roles)
       return permission
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
@@ -50,7 +64,12 @@ export class PermissionService {
 
   async delete({ id, deletedById }: { id: number; deletedById: number }) {
     try {
-      return await this.permissionRepository.delete({ id, deletedById }, true)
+      const permission = await this.permissionRepository.delete({
+        id,
+        deletedById,
+      })
+      const { roles } = permission
+      await this.deleteCachedRole(roles)
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw PermissionNotFoundException
