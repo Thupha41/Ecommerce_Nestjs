@@ -32,12 +32,12 @@ jobs:
           REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
           echo "${{ secrets.DOCKER_TOKEN }}" | docker login "$REG_LOWER" -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Write build .env for compose
+      - name: Write build .env for compose (lowercase image ref)
         run: |
           REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
           IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
           printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
-          echo "IMAGE_REF=${REG_LOWER}/${IMG_LOWER}" >> .env
+          echo "IMAGE_REF=${REG_LOWER}/${IMG_LOWER}"   >> .env
           echo "TAG=${{ steps.prmeta.outputs.tag }}"   >> .env
 
       - name: Build images (compose)
@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Compute tags
+      - name: Compute tags (lowercase image ref)
         id: meta
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
@@ -72,7 +72,7 @@ jobs:
           REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
           echo "${{ secrets.DOCKER_TOKEN }}" | docker login "$REG_LOWER" -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Write build .env for compose
+      - name: Write build .env for compose (lowercase image ref)
         run: |
           printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
           echo "IMAGE_REF=${{ steps.meta.outputs.image_ref }}" >> .env
@@ -116,7 +116,7 @@ jobs:
           ssh-keyscan -T 10 -p 22 -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
-      - name: Write .env for EC2
+      - name: Write .env for EC2 (lowercase image ref)
         run: |
           printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
           echo "IMAGE_REF=${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}" >> .env
