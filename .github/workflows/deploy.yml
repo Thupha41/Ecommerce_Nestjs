@@ -156,13 +156,16 @@ jobs:
           echo '${{ secrets.DOCKER_TOKEN }}' | \$SUDO docker login \"\$REGISTRY\" -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin
           \$SUDO docker pull \"\${IMAGE_REF}:\${TAG}\"
 
-          if \$SUDO docker ps -a --format '{{.Names}}' | grep -q \"^\\\${APP_NAME}\$\"; then
-            \$SUDO docker rm -f \"\${APP_NAME}\" || true
+          if $SUDO docker ps -a --format '{{.Names}}' | grep -q "^${APP_NAME}$"; then
+            $SUDO docker rm -f "${APP_NAME}" || true
           fi
 
-          \$SUDO docker run -d --name \"\${APP_NAME}\" --restart unless-stopped \"\${IMAGE_REF}:\${TAG}\"
-
-          \$SUDO docker image prune -f || true
+          $SUDO docker run -d --name "${APP_NAME}" \
+            --restart unless-stopped \
+            "${IMAGE_REF}:${TAG}"
+            
+          $SUDO docker image prune -f || true
+  
           " > deploy.sh
           chmod +x deploy.sh
 
