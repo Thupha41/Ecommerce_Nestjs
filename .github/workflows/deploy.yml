@@ -189,10 +189,8 @@ jobs:
 
       - name: Copy deploy script to server
         run: |
-          scp -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            ./deploy.sh "$USER@$HOST:/tmp/deploy.sh"
+          scp -i key.pem ./deploy.sh "$USER@$HOST:/tmp/deploy.sh"
 
       - name: Run deploy script on server
         run: |
-          ssh -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$USER@$HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
+          ssh -i key.pem "$USER@$HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
