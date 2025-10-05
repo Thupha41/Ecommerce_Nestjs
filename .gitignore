@@ -13,6 +13,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 **/*.pem
+**/*-nginx.md
 
 # OS
 .DS_Store
