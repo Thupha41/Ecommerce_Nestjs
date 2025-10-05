@@ -38,6 +38,7 @@ jobs:
           IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
           echo "IMAGE_REF=${REG_LOWER}/${IMG_LOWER}" > .env
           echo "TAG=${{ steps.prmeta.outputs.tag }}" >> .env
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> .env
 
       - name: Build images (compose)
         run: docker compose build --pull
@@ -75,6 +76,7 @@ jobs:
         run: |
           echo "IMAGE_REF=${{ steps.meta.outputs.image_ref }}" > .env
           echo "TAG=${{ steps.meta.outputs.tag }}" >> .env
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> .env
 
       - name: Build images (compose)
         run: docker compose build --pull
