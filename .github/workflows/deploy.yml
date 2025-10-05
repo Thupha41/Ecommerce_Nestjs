@@ -93,10 +93,11 @@ jobs:
     needs: cd_main
     runs-on: ubuntu-latest
     steps:
-      - name: Write SSH key
+      - name: Write SSH key (raw PEM from secrets.EC2_SSH_KEY)
         run: |
           printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > key.pem
           chmod 600 key.pem
+          head -n1 key.pem | grep -q 'BEGIN OPENSSH' || { echo "Invalid SSH key"; exit 1; }
 
       - name: Deploy to EC2 via SSH (install/check Docker, pull & restart with Compose)
         uses: appleboy/ssh-action@v0.1.10
@@ -166,6 +167,7 @@ jobs:
             ensure_docker
             start_docker_with_retries
 
+            # Login (hide token from -x)
             set +x
             echo "${{ secrets.DOCKER_TOKEN }}" | $SUDO docker login "$REGISTRY" \
               -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
