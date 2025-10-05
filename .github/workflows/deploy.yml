@@ -36,15 +36,15 @@ jobs:
         run: |
           REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
           IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
-          echo "IMAGE_REF=${REG_LOWER}/${IMG_LOWER}" > .env
-          echo "TAG=${{ steps.prmeta.outputs.tag }}" >> .env
-          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> .env
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
+          echo "IMAGE_REF=${REG_LOWER}/${IMG_LOWER}" >> .env
+          echo "TAG=${{ steps.prmeta.outputs.tag }}"   >> .env
 
       - name: Build images (compose)
-        run: docker compose build --pull
+        run: docker compose --profile build build --pull
 
       - name: Push images (compose)
-        run: docker compose push
+        run: docker compose --profile build push
 
   cd_main:
     if: github.event_name == 'push'
@@ -74,15 +74,15 @@ jobs:
 
       - name: Write build .env for compose
         run: |
-          echo "IMAGE_REF=${{ steps.meta.outputs.image_ref }}" > .env
-          echo "TAG=${{ steps.meta.outputs.tag }}" >> .env
-          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> .env
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
+          echo "IMAGE_REF=${{ steps.meta.outputs.image_ref }}" >> .env
+          echo "TAG=${{ steps.meta.outputs.tag }}"             >> .env
 
       - name: Build images (compose)
-        run: docker compose build --pull
+        run: docker compose --profile build build --pull
 
       - name: Push images (compose)
-        run: docker compose push
+        run: docker compose --profile build push
 
   deploy_ec2:
     needs: cd_main
@@ -118,9 +118,9 @@ jobs:
 
       - name: Write .env for EC2
         run: |
-          echo "IMAGE_REF=${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}" > .env
-          echo "TAG=${{ env.TAG }}" >> .env
-          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> .env
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
+          echo "IMAGE_REF=${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}" >> .env
+          echo "TAG=${{ env.TAG }}"                                                 >> .env
 
       - name: Upload compose + .env
         run: |
@@ -138,13 +138,13 @@ jobs:
               sudo apt-get install -y ca-certificates curl gnupg lsb-release
               sudo install -m 0755 -d /etc/apt/keyrings
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo \$VERSION_CODENAME) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
               sudo apt-get update -y
               sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
             fi
 
-            REG=\"${{ steps.reg.outputs.reg }}\"
-            echo \"${{ secrets.DOCKER_TOKEN }}\" | sudo docker login \"\$REG\" -u \"${{ secrets.DOCKER_USERNAME }}\" --password-stdin
+            REG="${{ steps.reg.outputs.reg }}"
+            echo "${{ secrets.DOCKER_TOKEN }}" | sudo docker login "$REG" -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
             cd /opt/app
             sudo docker compose pull
