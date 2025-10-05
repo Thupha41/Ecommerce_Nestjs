@@ -16,6 +16,7 @@
     "create-permissions": "ts-node scripts/create-permissions.ts",
     "test-generate-sku": "ts-node scripts/test-generate-sku.ts",
     "keyby": "ts-node scripts/keyby.ts",
+    "create-brands": "ts-node scripts/create-brands.ts",
     "migrate:dev": "npx prisma migrate dev",
     "create-migrate": "npx prisma migrate dev --create-only",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
