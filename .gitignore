@@ -1,5 +1,6 @@
 # compiled output
 /dist
+**/*.js
 /node_modules
 /build
 /docs
