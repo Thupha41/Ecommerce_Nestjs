@@ -192,10 +192,8 @@ jobs:
 
       - name: Copy deploy script to server
         run: |
-          scp -i ~/.ssh/ci_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            ./deploy.sh "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy.sh"
+          scp -i ~/.ssh/ci_key ./deploy.sh "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy.sh"
 
       - name: Run deploy script on server
         run: |
-          ssh -i ~/.ssh/ci_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$REMOTE_USER@$REMOTE_HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
+          ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
