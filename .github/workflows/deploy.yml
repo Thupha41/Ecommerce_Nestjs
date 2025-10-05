@@ -27,6 +27,9 @@ jobs:
         id: prmeta
         run: echo "tag=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
 
+      - name: Set env 
+        run: echo ${{ secrets.ENV_PRODUCTION }} > .env
+
       - name: Build image (no push, load to daemon)
         uses: docker/build-push-action@v6
         with:
@@ -68,6 +71,9 @@ jobs:
         run: |
           echo "${{ secrets.DOCKER_TOKEN }}" | docker login ${{ secrets.DOCKER_REGISTRY }} \
             -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Set env 
+        run: echo ${{ secrets.ENV_PRODUCTION }} > .env
 
       - name: Build & Push image
         uses: docker/build-push-action@v6
@@ -165,9 +171,6 @@ jobs:
 
             ensure_docker
             start_docker_with_retries
-
-            echo "${{ secrets.DOCKER_TOKEN }}" | $SUDO docker login "$REGISTRY" \
-              -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
             $SUDO docker pull "${IMAGE_REF}:${TAG}"
 
