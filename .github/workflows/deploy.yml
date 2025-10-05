@@ -153,19 +153,21 @@ jobs:
           ensure_docker
           start_docker_with_retries
 
+          set +x
           echo '${{ secrets.DOCKER_TOKEN }}' | \$SUDO docker login \"\$REGISTRY\" -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin
+          set -x
+
           \$SUDO docker pull \"\${IMAGE_REF}:\${TAG}\"
 
-          if $SUDO docker ps -a --format '{{.Names}}' | grep -q "^${APP_NAME}$"; then
-            $SUDO docker rm -f "${APP_NAME}" || true
+          if \$SUDO docker ps -a --format '{{.Names}}' | grep -q \"^\\\${APP_NAME}\$\"; then
+            \$SUDO docker rm -f \"\${APP_NAME}\" || true
           fi
 
-          $SUDO docker run -d --name "${APP_NAME}" \
+          \$SUDO docker run -d --name \"\${APP_NAME}\" \
             --restart unless-stopped \
-            "${IMAGE_REF}:${TAG}"
-            
-          $SUDO docker image prune -f || true
-  
+            \"\${IMAGE_REF}:\${TAG}\"
+
+          \$SUDO docker image prune -f || true
           " > deploy.sh
           chmod +x deploy.sh
 
