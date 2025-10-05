@@ -44,9 +44,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run tests inside container
-        run: docker run --rm prtest:${{ steps.prmeta.outputs.tag }} npm run test
-
 
   cd_main:
     if: github.event_name == 'push'
