@@ -95,7 +95,7 @@ jobs:
     steps:
       - name: Write SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > key.pem
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > key.pem
           chmod 600 key.pem
 
       - name: Deploy to EC2 via SSH (install/check Docker, pull & restart with Compose)
