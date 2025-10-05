@@ -92,7 +92,7 @@ jobs:
     needs: cd_main
     runs-on: ubuntu-latest
     env:
-      REMOTE_HOST: ${{ secrets.EC2_PUBLIC_DNS }}
+      REMOTE_HOST: ${{ secrets.EC2_PUBLIC_DNS }}   # dùng DNS nhất quán
       REMOTE_USER: ${{ secrets.EC2_USER }}
       TAG:  ${{ needs.cd_main.outputs.tag }}
     steps:
@@ -102,19 +102,19 @@ jobs:
           echo "reg=$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
           echo "img=$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - name: Write SSH private key from secret (printf)
+      - name: Write SSH private key to ~/.ssh and lock perms
         run: |
-          printf '%s' "${{ secrets.EC2_SSH_KEY }}" > key.pem
-          tr -d '\r' < key.pem > key.tmp && mv key.tmp key.pem
-          chmod 600 key.pem
-          ssh-keygen -y -f key.pem >/dev/null 2>&1 || { echo "Invalid SSH key"; exit 1; }
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ci_key
+          tr -d '\r' < ~/.ssh/ci_key > ~/.ssh/ci_key.tmp && mv ~/.ssh/ci_key.tmp ~/.ssh/ci_key
+          chmod 600 ~/.ssh/ci_key
+          ssh-keygen -y -f ~/.ssh/ci_key >/dev/null 2>&1 || { echo "Invalid SSH key"; exit 1; }
 
       - name: Add host to known_hosts (pin DNS host key)
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          # Remove stale entry if the instance was re-created
           ssh-keygen -R "$REMOTE_HOST" 2>/dev/null || true
-          # Pin current host key for the DNS name
           ssh-keyscan -T 10 -p 22 -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
@@ -192,10 +192,10 @@ jobs:
 
       - name: Copy deploy script to server
         run: |
-          scp -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+          scp -i ~/.ssh/ci_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             ./deploy.sh "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy.sh"
 
       - name: Run deploy script on server
         run: |
-          ssh -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+          ssh -i ~/.ssh/ci_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$REMOTE_USER@$REMOTE_HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
