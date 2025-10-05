@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN corepack enable && corepack prepare npm@10.8.2 --activate
 
 # Install dependencies
-RUN npm ci
+RUN npm install 
 
 # Copy prisma schema
 COPY prisma ./prisma/
@@ -35,7 +35,7 @@ COPY package*.json ./
 RUN corepack enable && corepack prepare npm@10.8.2 --activate
 
 # Install production dependencies only (relax peer deps)
-RUN npm ci
+RUN npm install --omit=dev
 
 # Copy Prisma client from builder
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
