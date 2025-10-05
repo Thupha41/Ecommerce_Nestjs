@@ -97,7 +97,7 @@ jobs:
         run: |
           printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > key.pem
           chmod 600 key.pem
-          head -n1 key.pem | grep -q 'BEGIN OPENSSH' || { echo "Invalid SSH key"; exit 1; }
+          head -n1 key.pem | grep -q '-----BEGIN RSA PRIVATE KEY-----' || { echo "Invalid SSH key"; exit 1; }
 
       - name: Deploy to EC2 via SSH (install/check Docker, pull & restart with Compose)
         uses: appleboy/ssh-action@v0.1.10
