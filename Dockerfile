@@ -8,8 +8,8 @@ COPY package*.json ./
 # Pin npm version for consistent lock resolution
 RUN corepack enable && corepack prepare npm@10.8.2 --activate
 
-# Install dependencies (relax peer deps to avoid ERESOLVE)
-RUN npm ci --legacy-peer-deps --no-audit --no-fund
+# Install dependencies
+RUN npm ci
 
 # Copy prisma schema
 COPY prisma ./prisma/
@@ -35,7 +35,7 @@ COPY package*.json ./
 RUN corepack enable && corepack prepare npm@10.8.2 --activate
 
 # Install production dependencies only (relax peer deps)
-RUN npm ci --omit=dev --legacy-peer-deps --no-audit --no-fund
+RUN npm ci
 
 # Copy Prisma client from builder
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
