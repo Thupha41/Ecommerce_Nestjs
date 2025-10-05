@@ -106,7 +106,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -euxo pipefail
-
+            
             REGISTRY="${{ secrets.DOCKER_REGISTRY }}"
             IMAGE_REF="${{ needs.cd_main.outputs.image_ref }}"
             TAG="${{ needs.cd_main.outputs.tag }}"
@@ -174,7 +174,6 @@ jobs:
             ensure_docker
             start_docker_with_retries
 
-            # Login to private registry on EC2, then pull
             REG_LOWER="$(echo "$REGISTRY" | tr '[:upper:]' '[:lower:]')"
             echo "${{ secrets.DOCKER_TOKEN }}" | $SUDO docker login "$REG_LOWER" \
               -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
