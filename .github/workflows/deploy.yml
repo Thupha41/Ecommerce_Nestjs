@@ -92,7 +92,7 @@ jobs:
     needs: cd_main
     runs-on: ubuntu-latest
     env:
-      HOST: ${{ secrets.EC2_PUBLIC_IP }}
+      HOST: ${{ secrets.EC2_PUBLIC_DNS }}   # <-- use DNS everywhere
       REMOTE_USER: ${{ secrets.EC2_USER }}
       TAG:  ${{ needs.cd_main.outputs.tag }}
     steps:
@@ -109,13 +109,16 @@ jobs:
           chmod 600 key.pem
           ssh-keygen -y -f key.pem >/dev/null 2>&1 || { echo "Invalid SSH key"; exit 1; }
 
-      - name: Add host to known_hosts (pin host key)
+      - name: Add host to known_hosts (pin DNS host key)
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          ssh-keyscan -T 5 -p 22 "$HOST" >> ~/.ssh/known_hosts
+          # Remove stale entry if the instance was re-created
+          ssh-keygen -R "$HOST" 2>/dev/null || true
+          # Pin current host key for the DNS name
+          ssh-keyscan -T 10 -p 22 -H "$HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
-      - name: Create deploy script locally (plain constants, no sus quoting)
+      - name: Create deploy script locally
         run: |
           printf '%s\n' "#!/usr/bin/env bash
           set -euxo pipefail
@@ -189,8 +192,10 @@ jobs:
 
       - name: Copy deploy script to server
         run: |
-          scp -i key.pem ./deploy.sh "ubuntu@ec2-13-210-204-157.ap-southeast-2.compute.amazonaws.com:/tmp/deploy.sh"
+          scp -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            ./deploy.sh "$REMOTE_USER@$HOST:/tmp/deploy.sh"
 
       - name: Run deploy script on server
         run: |
-          ssh -i key.pem "ubuntu@ec2-13-210-204-157.ap-southeast-2.compute.amazonaws.com" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
+          ssh -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$REMOTE_USER@$HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
