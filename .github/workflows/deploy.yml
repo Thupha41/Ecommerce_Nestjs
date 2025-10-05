@@ -19,36 +19,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
+
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Compute PR tag
         id: prmeta
         run: echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
-      - name: Create .env (not used at runtime, but kept for your build if needed)
+
+      - name: Login to registry
         run: |
-          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
-      - name: Build image (no push, load to daemon)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          load: true
-          tags: prtest:${{ steps.prmeta.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login "$REG_LOWER" -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Write build .env for compose
+        run: |
+          REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
+          IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE_REF=${REG_LOWER}/${IMG_LOWER}" > .env
+          echo "TAG=${{ steps.prmeta.outputs.tag }}" >> .env
+
+      - name: Build images (compose)
+        run: docker compose build --pull
+
+      - name: Push images (compose)
+        run: docker compose push
 
   cd_main:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       image_ref: ${{ steps.meta.outputs.image_ref }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Compute tags
         id: meta
         run: |
@@ -57,27 +62,25 @@ jobs:
           REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
           IMG_LOWER="$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')"
           echo "image_ref=${REG_LOWER}/${IMG_LOWER}" >> "$GITHUB_OUTPUT"
-      - name: Set up Docker Buildx
+
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Login to container registry with PAT
+
+      - name: Login to registry
         run: |
           REG_LOWER="$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
-          echo "${{ secrets.DOCKER_TOKEN }}" | docker login "$REG_LOWER" \
-            -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      - name: Create .env (not used at runtime, but kept for your build if needed)
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login "$REG_LOWER" -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Write build .env for compose
         run: |
-          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" > .env
-      - name: Build & Push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ steps.meta.outputs.image_ref }}:${{ steps.meta.outputs.tag }}
-            ${{ steps.meta.outputs.image_ref }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          echo "IMAGE_REF=${{ steps.meta.outputs.image_ref }}" > .env
+          echo "TAG=${{ steps.meta.outputs.tag }}" >> .env
+
+      - name: Build images (compose)
+        run: docker compose build --pull
+
+      - name: Push images (compose)
+        run: docker compose push
 
   deploy_ec2:
     needs: cd_main
@@ -87,13 +90,15 @@ jobs:
       REMOTE_USER: ${{ secrets.EC2_USER }}
       TAG:         ${{ needs.cd_main.outputs.tag }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Compute registry/image (lowercase)
         id: reg
         run: |
           echo "reg=$(echo "${{ secrets.DOCKER_REGISTRY }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
           echo "img=$(echo "${{ secrets.DOCKER_IMAGE }}"   | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - name: Write SSH private key to ~/.ssh and lock perms
+      - name: Write SSH key
         run: |
           umask 077
           mkdir -p ~/.ssh
@@ -102,74 +107,44 @@ jobs:
           chmod 600 ~/.ssh/ci_key
           ssh-keygen -y -f ~/.ssh/ci_key >/dev/null 2>&1 || { echo "Invalid SSH key"; exit 1; }
 
-      - name: Add host to known_hosts
+      - name: Pin known_hosts
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           ssh-keygen -R "$REMOTE_HOST" 2>/dev/null || true
           ssh-keyscan -T 10 -p 22 -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
-      - name: Create deploy script locally (docker run only)
+      - name: Write runtime .env for EC2
         run: |
-          printf '%s\n' "#!/usr/bin/env bash
-          set -euxo pipefail
+          echo "IMAGE_REF=${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}" > runtime.env
+          echo "TAG=${{ env.TAG }}" >> runtime.env
+          # thêm các runtime secrets khác nếu cần:
+          printf '%s\n' "${{ secrets.ENV_PRODUCTION }}" >> runtime.env
 
-          REGISTRY='${{ steps.reg.outputs.reg }}'
-          IMAGE_REF='${{ steps.reg.outputs.reg }}/${{ steps.reg.outputs.img }}'
-          TAG='${{ env.TAG }}'
-          APP_NAME='ecom-app'
-
-          if [ \"\$(id -u)\" -eq 0 ]; then SUDO=\"\"; else SUDO=\"sudo\"; fi
-
-          ensure_docker() {
-            if command -v docker >/dev/null 2>&1; then return 0; fi
-            \$SUDO apt-get update -y
-            \$SUDO apt-get install -y ca-certificates curl gnupg lsb-release
-            \$SUDO install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \$SUDO gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            \$SUDO chmod a+r /etc/apt/keyrings/docker.gpg
-            echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo \$VERSION_CODENAME) stable\" | \$SUDO tee /etc/apt/sources.list.d/docker.list > /dev/null
-            \$SUDO apt-get update -y
-            \$SUDO apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-          }
-
-          start_docker_with_retries() {
-            local tries=0 max=3
-            until \$SUDO systemctl is-active --quiet docker; do
-              tries=\$((tries + 1))
-              \$SUDO systemctl daemon-reload || true
-              \$SUDO systemctl enable docker || true
-              \$SUDO systemctl start docker || true
-              sleep 2
-              if [ \"\$tries\" -ge \"\$max\" ] && ! \$SUDO systemctl is-active --quiet docker; then
-                \$SUDO apt-get install -y --reinstall docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
-                \$SUDO systemctl restart docker || true
-                sleep 3
-                \$SUDO systemctl is-active --quiet docker || { echo 'Docker not running'; exit 1; }
-              fi
-            done
-          }
-
-          ensure_docker
-          start_docker_with_retries
-
-          set +x
-          echo '${{ secrets.DOCKER_TOKEN }}' | \$SUDO docker login \"\$REGISTRY\" -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin
-          set -x
-
-          \$SUDO docker pull \"\${IMAGE_REF}:\${TAG}\"
-
-          \$SUDO docker rm -f \"\${APP_NAME}\" || true
-
-          \$SUDO docker run -d --name \"\${APP_NAME}\" \
-            --restart unless-stopped \
-            \"\${IMAGE_REF}:\${TAG}\"
-
-          \$SUDO docker image prune -f || true
-          " > deploy.sh
-          chmod +x deploy.sh
-
-      - name: Copy & run deploy script on server
+      - name: Upload compose + env
         run: |
-          scp -i ~/.ssh/ci_key ./deploy.sh "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy.sh"
-          ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
+          ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" "sudo mkdir -p /opt/app && sudo chown $REMOTE_USER:$REMOTE_USER /opt/app"
+          scp -i ~/.ssh/ci_key ./docker-compose.yml "$REMOTE_USER@$REMOTE_HOST:/opt/app/docker-compose.yml"
+          scp -i ~/.ssh/ci_key ./runtime.env         "$REMOTE_USER@$REMOTE_HOST:/opt/app/.env"
+
+      - name: Deploy with compose on EC2
+        run: |
+          ssh -i ~/.ssh/ci_key "$REMOTE_USER@$REMOTE_HOST" bash -c "'
+            set -eux
+            if command -v docker >/dev/null 2>&1; then :; else
+              sudo apt-get update -y
+              sudo apt-get install -y ca-certificates curl gnupg lsb-release
+              sudo install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo \$VERSION_CODENAME) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update -y
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+            fi
+
+            REG=\"${{ steps.reg.outputs.reg }}\"
+            echo \"${{ secrets.DOCKER_TOKEN }}\" | sudo docker login \"\$REG\" -u \"${{ secrets.DOCKER_USERNAME }}\" --password-stdin
+
+            cd /opt/app
+            sudo --preserve-env=IMAGE_REF,TAG docker compose pull
+            sudo --preserve-env=IMAGE_REF,TAG docker compose up -d
+          '"
