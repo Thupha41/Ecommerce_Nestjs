@@ -92,7 +92,7 @@ jobs:
     needs: cd_main
     runs-on: ubuntu-latest
     env:
-      HOST: ${{ secrets.EC2_PUBLIC_DNS }}   # <-- use DNS everywhere
+      REMOTE_HOST: ${{ secrets.EC2_PUBLIC_DNS }}
       REMOTE_USER: ${{ secrets.EC2_USER }}
       TAG:  ${{ needs.cd_main.outputs.tag }}
     steps:
@@ -113,9 +113,9 @@ jobs:
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           # Remove stale entry if the instance was re-created
-          ssh-keygen -R "$HOST" 2>/dev/null || true
+          ssh-keygen -R "$REMOTE_HOST" 2>/dev/null || true
           # Pin current host key for the DNS name
-          ssh-keyscan -T 10 -p 22 -H "$HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -p 22 -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
           test -s ~/.ssh/known_hosts || { echo "Could not fetch SSH host key"; exit 1; }
 
       - name: Create deploy script locally
@@ -193,9 +193,9 @@ jobs:
       - name: Copy deploy script to server
         run: |
           scp -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            ./deploy.sh "$REMOTE_USER@$HOST:/tmp/deploy.sh"
+            ./deploy.sh "$REMOTE_USER@$REMOTE_HOST:/tmp/deploy.sh"
 
       - name: Run deploy script on server
         run: |
           ssh -i key.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$REMOTE_USER@$HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
+            "$REMOTE_USER@$REMOTE_HOST" "bash /tmp/deploy.sh && rm -f /tmp/deploy.sh"
