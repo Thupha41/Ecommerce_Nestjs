@@ -17,6 +17,7 @@ import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ApiBearerAuth, ApiParam, ApiTags, ApiBody, ApiOperation } from '@nestjs/swagger'
 import { UseGuards } from '@nestjs/common'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
+import { SkipThrottle } from '@nestjs/throttler'
 
 @Controller('manage-product/products')
 @UseGuards(AccessTokenGuard)
@@ -26,6 +27,7 @@ export class ManageProductController {
   constructor(private readonly manageProductService: ManageProductService) {}
 
   @Get()
+  @SkipThrottle()
   @ApiOperation({ summary: 'List products', description: 'Get a list of products with pagination / Admin Only' })
   @ZodSerializerDto(GetProductsResDTO)
   @ResponseMessage('Products fetched successfully')
@@ -38,6 +40,7 @@ export class ManageProductController {
   }
 
   @Get(':productId')
+  @SkipThrottle()
   @ZodSerializerDto(GetProductDetailResDTO)
   @ApiParam({ name: 'productId', required: true, type: Number })
   @ApiOperation({ summary: 'List detail product', description: 'Get product detail / Admin Only' })
