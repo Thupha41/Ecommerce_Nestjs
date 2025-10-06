@@ -32,3 +32,7 @@ export const generateCancelPaymentJobId = (paymentId: number) => {
 export const generateRoomUserId = (userId: number) => {
   return `userId-${userId}`
 }
+export const generateProductNo = () => {
+  //generate random 9 digits
+  return Math.floor(100000000 + Math.random() * 900000000)
+}

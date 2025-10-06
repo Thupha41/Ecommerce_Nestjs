@@ -286,6 +286,7 @@ model Role {
 
 model Product {
   id                  Int                  @id @default(autoincrement())
+  productNo           String               @db.VarChar(9)
   publishedAt         DateTime?
   name                String               @db.VarChar(500)
   basePrice           Float
