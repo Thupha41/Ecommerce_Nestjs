@@ -19,7 +19,7 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "5435:5432"
     environment:
       POSTGRES_PASSWORD: "${DB_PASSWORD:-123456}"
       POSTGRES_USER: "${DB_USER:-postgres}"
