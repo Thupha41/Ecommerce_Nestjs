@@ -41,6 +41,8 @@ import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronj
 import KeyvRedis from '@keyv/redis'
 import { Keyv } from 'keyv'
 import { CacheableMemory } from 'cacheable'
+import { LoggerModule } from 'nestjs-pino'
+import pino from 'pino'
 @Module({
   imports: [
     SharedModule,
@@ -66,6 +68,30 @@ import { CacheableMemory } from 'cacheable'
     OrderModule,
     PaymentModule,
     ReviewModule,
+    LoggerModule.forRoot({
+      pinoHttp: {
+        serializers: {
+          req(req: any) {
+            return {
+              method: req.method,
+              url: req.url,
+              query: req.query,
+              params: req.params,
+            }
+          },
+          res(res: any) {
+            return {
+              statusCode: res.statusCode,
+            }
+          },
+        },
+        stream: pino.destination({
+          dest: path.resolve('logs/app.log'),
+          sync: false, // Asynchronous logging
+          mkdir: true, // Create the directory if it doesn't exist
+        }),
+      },
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: () => {
@@ -74,7 +100,7 @@ import { CacheableMemory } from 'cacheable'
             new Keyv({
               store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
             }),
-            new KeyvRedis('redis://localhost:6379'),
+            new KeyvRedis(envConfig.REDIS_URL),
           ],
         }
       },
