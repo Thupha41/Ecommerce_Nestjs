@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    profiles: ["build"]
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
