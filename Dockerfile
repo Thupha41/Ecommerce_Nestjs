@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN corepack enable && corepack prepare npm@10.8.2 --activate
 
 # Install dependencies
-RUN npm install 
+RUN npm ci --legacy-peer-deps --force
 
 # Copy prisma schema
 COPY prisma ./prisma/
@@ -34,14 +34,14 @@ COPY package*.json ./
 # Pin npm version for consistent lock resolution
 RUN corepack enable && corepack prepare npm@10.8.2 --activate
 
-# Install production dependencies only (relax peer deps)
-RUN npm install --omit=dev
-
-# Copy Prisma client from builder
-COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
+# Copy all node_modules from builder to ensure all dependencies are available
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy compiled application
 COPY --from=builder /app/dist ./dist
+
+# Copy i18n files (needed for internationalization)
+COPY --from=builder /app/src/i18n ./src/i18n
 
 # Copy prisma schema (needed for migrations)
 COPY prisma ./prisma/
