@@ -38,6 +38,9 @@ import { ThrottlerModule } from '@nestjs/throttler'
 import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard'
 import { ReviewModule } from './modules/review/review.module'
 import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronjob'
+import KeyvRedis from '@keyv/redis'
+import { Keyv } from 'keyv'
+import { CacheableMemory } from 'cacheable'
 @Module({
   imports: [
     SharedModule,
@@ -63,8 +66,18 @@ import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronj
     OrderModule,
     PaymentModule,
     ReviewModule,
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
+      useFactory: () => {
+        return {
+          stores: [
+            new Keyv({
+              store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
+            }),
+            new KeyvRedis('redis://localhost:6379'),
+          ],
+        }
+      },
     }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
