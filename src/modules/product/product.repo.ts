@@ -10,6 +10,7 @@ import {
 import { ALL_LANGUAGE_CODE, OrderByType, SortBy, SortByType } from 'src/shared/constants/other.constant'
 import { ProductType } from 'src/shared/models/shared-product.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
+import { generateProductNo } from 'src/shared/helpers'
 
 @Injectable()
 export class ProductRepo {
@@ -235,6 +236,7 @@ export class ProductRepo {
       data: {
         createdById,
         ...productData,
+        productNo: String(generateProductNo()),
         // Đảm bảo variants là mảng rỗng nếu không được cung cấp
         variants: variants || [],
         categories: {
