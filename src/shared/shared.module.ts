@@ -11,7 +11,7 @@ import { EmailService } from 'src/shared/services/email.service'
 import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { CacheModule } from '@nestjs/cache-manager'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
-import { S3Service } from 'src/shared/services/s3.service'
+// import { S3Service } from 'src/shared/services/s3.service'
 import { PaymentAPIKeyGuard } from 'src/shared/guards/payment-api-key.guard'
 import { SharedPaymentRepository } from 'src/shared/repositories/shared-payment.repo'
 import { SharedWebSocketRepository } from 'src/shared/repositories/shared-websocket.repo'
@@ -25,7 +25,7 @@ const sharedServices = [
   SharedPaymentRepository,
   SharedWebSocketRepository,
   TwoFactorAuthService,
-  S3Service,
+  // S3Service,
 ]
 
 @Global()

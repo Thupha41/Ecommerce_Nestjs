@@ -16,7 +16,7 @@ import { LanguageModule } from './modules/language/language.module'
 import { ProfileModule } from './modules/profile/profile.module'
 import { UserModule } from './modules/user/user.module'
 import { TransformInterceptor } from './shared/interceptors/transform.interceptor'
-import { MediaModule } from './modules/media/media.module'
+// import { MediaModule } from './modules/media/media.module'
 import { BrandModule } from './modules/brand/brand.module'
 import { BrandTranslationModule } from './modules/brand/brand-translation/brand-translation.module'
 import { CategoryModule } from './modules/category/category.module'
@@ -54,7 +54,7 @@ import pino from 'pino'
     LanguageModule,
     ProfileModule,
     UserModule,
-    MediaModule,
+    // MediaModule,
     BrandModule,
     BrandTranslationModule,
     CategoryModule,
