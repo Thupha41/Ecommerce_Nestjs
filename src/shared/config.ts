@@ -18,6 +18,11 @@ const configSchema = z.object({
   DATABASE_URL: z.string(),
 
   // PORT: z.number().min(1),
+  NODE_ENV: z.string(),
+
+  PRODUCTION_URL: z.string(),
+  
+  DEVELOPMENT_URL: z.string(),
 
   ACCESS_TOKEN_SECRET: z.string(),
 
