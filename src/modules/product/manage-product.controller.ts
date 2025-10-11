@@ -14,7 +14,7 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { IAccessTokenPayload } from 'src/shared/types/jwt.types'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
-import { ApiBearerAuth, ApiParam, ApiTags, ApiBody, ApiOperation } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiParam, ApiTags, ApiBody, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { UseGuards } from '@nestjs/common'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { SkipThrottle } from '@nestjs/throttler'
@@ -29,6 +29,17 @@ export class ManageProductController {
   @Get()
   @SkipThrottle()
   @ApiOperation({ summary: 'List products', description: 'Get a list of products with pagination / Admin Only' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'brandIds', required: false, type: [Number] })
+  @ApiQuery({ name: 'categories', required: false, type: [Number] })
+  @ApiQuery({ name: 'minPrice', required: false, type: Number })
+  @ApiQuery({ name: 'maxPrice', required: false, type: Number })
+  @ApiQuery({ name: 'createdById', required: false, type: Number })
+  @ApiQuery({ name: 'isPublic', required: false, type: Boolean })
+  @ApiQuery({ name: 'orderBy', required: false, type: String })
+  @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ZodSerializerDto(GetProductsResDTO)
   @ResponseMessage('Products fetched successfully')
   list(@Query() query: GetManageProductsQueryDTO, @ActiveUser() user: IAccessTokenPayload) {
@@ -69,6 +80,7 @@ export class ManageProductController {
   @ZodSerializerDto(ProductDTO)
   @ResponseMessage('Product updated successfully')
   @ApiBody({ type: UpdateProductBodyDTO })
+  @ApiParam({ name: 'productId', required: true, type: Number })
   @ApiOperation({ summary: 'Update product', description: 'Update product / Admin Only' })
   update(
     @Body() body: UpdateProductBodyDTO,
