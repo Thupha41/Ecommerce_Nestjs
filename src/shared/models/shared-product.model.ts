@@ -35,12 +35,13 @@ export const ProductSchema = z.object({
   id: z.number(),
   publishedAt: z.coerce.date().nullable(),
   name: z.string().trim().max(500),
+  productNo: z.string().trim().max(9),
   basePrice: z.number().min(0),
   virtualPrice: z.number().min(0),
   brandId: z.number().positive(),
   images: z.array(z.string()),
   variants: VariantsSchema, // Json field represented as a record
-
+  // description: z.string().trim().max(500),
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),

@@ -4,7 +4,12 @@ import { z } from 'zod'
 export const BrandSchema = z.object({
   id: z.number(),
   name: z.string().max(500),
-  logo: z.string().url().max(1000),
+  logo: z
+  .string()
+  .max(1000)
+  .refine((val) => val === '' || z.string().url().safeParse(val).success, {
+    message: 'Logo must be a valid URL or empty string',
+  }),
 
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
