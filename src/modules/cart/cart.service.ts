@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestj
 import { CartRepository } from './cart.repo'
 import { I18nContext } from 'nestjs-i18n'
 import { PaginationQueryType } from 'src/shared/models/request.model'
-import { AddToCartBodyType, DeleteCartBodyType, UpdateCartItemBodyType } from './models/cart.model'
+import { AddToCartBodyType, DeleteCartBodyType, UpdateCartItemBodyType, CheckoutReviewBodyType, CheckoutReviewResType } from './models/cart.model'
 
 @Injectable()
 export class CartService {
@@ -52,5 +52,12 @@ export class CartService {
       notFoundIds,
       notFoundMessage,
     }
+  }
+
+  async checkoutReview(userId: number, body: CheckoutReviewBodyType): Promise<CheckoutReviewResType> {
+    return this.cartRepository.checkoutReview({
+      userId,
+      ...body,
+    })
   }
 }

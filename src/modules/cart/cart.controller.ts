@@ -10,14 +10,18 @@ import {
   AddToCartBodyDTO,
   UpdateCartItemBodyDTO,
   DeleteCartBodyDTO,
+  CheckoutReviewBodyDTO,
+  CheckoutReviewResDTO,
 } from './cart.dto'
 import { PaginationQueryDTO } from 'src/shared/dtos/request.dto'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
+import { SkipThrottle } from '@nestjs/throttler'
 
 @ApiBearerAuth()
 @ApiTags('Cart')
 @Controller('cart')
+@SkipThrottle()
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
@@ -62,5 +66,13 @@ export class CartController {
   @ResponseMessage('{count} cart items deleted from cart {notFoundMessage}', true)
   async deleteCartItem(@ActiveUser('userId') userId: number, @Body() body: DeleteCartBodyDTO) {
     return this.cartService.deleteCartItem(userId, body)
+  }
+
+  @Post('checkout')
+  @ApiBody({ type: CheckoutReviewBodyDTO })
+  @ZodSerializerDto(CheckoutReviewResDTO)
+  @ResponseMessage('Checkout review generated successfully')
+  async checkoutReview(@ActiveUser('userId') userId: number, @Body() body: CheckoutReviewBodyDTO) {
+    return this.cartService.checkoutReview(userId, body)
   }
 }

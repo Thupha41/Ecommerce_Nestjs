@@ -66,6 +66,49 @@ export const DeleteCartBodySchema = z
   })
   .strict()
 
+// Checkout schemas
+export const CheckoutItemSchema = z.object({
+  cartItemId: z.number(),
+  skuId: z.number(),
+  quantity: z.number(),
+  price: z.number(),
+  productId: z.number(),
+  productName: z.string(),
+  productThumb: z.string(),
+  variants: z.array(z.object({
+    name: z.string(),
+    value: z.string(),
+  })).optional(),
+})
+
+export const CheckoutBrandGroupSchema = z.object({
+  brandId: z.number(),
+  brandName: z.string(),
+  brandLogo: z.string(),
+  items: z.array(CheckoutItemSchema),
+  totalPrice: z.number(),
+  discountCode: z.string().optional(),
+  discountAmount: z.number().default(0),
+  finalPrice: z.number(),
+})
+
+export const CheckoutOrderSchema = z.object({
+  totalPrice: z.number(),
+  feeShip: z.number(),
+  totalDiscount: z.number(),
+  totalCheckout: z.number(),
+})
+
+export const CheckoutReviewBodySchema = z.object({
+  cartItemIds: z.array(z.number().int().positive()),
+  discountCode: z.string().optional(),
+})
+
+export const CheckoutReviewResSchema = z.object({
+  brandGroups: z.array(CheckoutBrandGroupSchema),
+  checkoutOrder: CheckoutOrderSchema,
+})
+
 export type CartItemType = z.infer<typeof CartItemSchema>
 export type CartItemResponseType = z.infer<typeof CartItemResponseSchema>
 export type GetCartItemParamType = z.infer<typeof GetCartItemParamsSchema>
@@ -74,3 +117,8 @@ export type GetCartResType = z.infer<typeof GetCartResSchema>
 export type AddToCartBodyType = z.infer<typeof AddToCartBodySchema>
 export type UpdateCartItemBodyType = z.infer<typeof UpdateCartItemBodySchema>
 export type DeleteCartBodyType = z.infer<typeof DeleteCartBodySchema>
+export type CheckoutItemType = z.infer<typeof CheckoutItemSchema>
+export type CheckoutBrandGroupType = z.infer<typeof CheckoutBrandGroupSchema>
+export type CheckoutOrderType = z.infer<typeof CheckoutOrderSchema>
+export type CheckoutReviewBodyType = z.infer<typeof CheckoutReviewBodySchema>
+export type CheckoutReviewResType = z.infer<typeof CheckoutReviewResSchema>

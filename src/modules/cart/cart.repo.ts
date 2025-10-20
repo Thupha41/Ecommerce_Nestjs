@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from 'src/shared/services/prisma.service'
 import { Prisma } from '@prisma/client'
+import { DiscountService } from 'src/modules/discount/discount.service'
 import {
   CartItemNotFoundException,
   InvalidQuantityException,
@@ -15,6 +16,10 @@ import {
   GetCartResType,
   UpdateCartItemBodyType,
   DeleteCartBodyType,
+  CheckoutReviewBodyType,
+  CheckoutReviewResType,
+  CheckoutBrandGroupType,
+  CheckoutItemType,
 } from './models/cart.model'
 import { ALL_LANGUAGE_CODE } from 'src/shared/constants/other.constant'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
@@ -22,7 +27,10 @@ import { SKUSchemaType } from 'src/shared/models/shared-sku.model'
 
 @Injectable()
 export class CartRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly discountService: DiscountService,
+  ) {}
   private async validateSKU({
     skuId,
     quantity,
@@ -373,6 +381,151 @@ export class CartRepository {
     return {
       count: result.count,
       notFoundIds,
+    }
+  }
+
+  async checkoutReview({
+    userId,
+    cartItemIds,
+    discountCode,
+  }: CheckoutReviewBodyType & { userId: number }): Promise<CheckoutReviewResType> {
+    // STEP 1: Check if user exists
+  
+
+    // STEP 2: Validate that all cartItemIds belong to the user's cart
+    const existingCartItems = await this.prismaService.cartItem.findMany({
+      where: {
+        id: { in: cartItemIds },
+        userId,
+      },
+      select: { id: true },
+    })
+
+    const existingCartItemIds = existingCartItems.map(item => item.id)
+    const invalidCartItemIds = cartItemIds.filter(id => !existingCartItemIds.includes(id))
+
+    if (invalidCartItemIds.length > 0) {
+      throw new NotFoundException(`Không tìm thấy sản phẩm trong giỏ hàng: ${invalidCartItemIds.join(', ')}`)
+    }
+
+    // STEP 3: Get cart items with full product information
+    const cartItems = await this.prismaService.cartItem.findMany({
+      where: {
+        id: { in: cartItemIds },
+        userId,
+        sku: {
+          product: {
+            deletedAt: null,
+            publishedAt: {
+              lte: new Date(),
+              not: null,
+            },
+          },
+        },
+      },
+      include: {
+        sku: {
+          include: {
+            product: {
+              include: {
+                brand: true,
+                productTranslations: {
+                  where: { deletedAt: null },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (cartItems.length === 0) {
+      throw new Error('No valid cart items found')
+    }
+
+    // STEP 3: Initialize checkout order
+    const checkoutOrder = {
+      totalPrice: 0,
+      feeShip: 25000,
+      totalDiscount: 0,
+      totalCheckout: 0,
+    }
+
+    // STEP 5: Group cart items by brand
+    const brandGroupsMap = new Map<number, CheckoutBrandGroupType>()
+
+    for (const cartItem of cartItems) {
+      const brandId = cartItem.sku.product.brandId
+      const brand = cartItem.sku.product.brand
+
+      if (!brandGroupsMap.has(brandId)) {
+        brandGroupsMap.set(brandId, {
+          brandId,
+          brandName: brand.name,
+          brandLogo: brand.logo || '',
+          items: [],
+          totalPrice: 0,
+          discountCode,
+          discountAmount: 0,
+          finalPrice: 0,
+        })
+      }
+
+      // Create checkout item
+      const checkoutItem: CheckoutItemType = {
+        cartItemId: cartItem.id,
+        skuId: cartItem.skuId,
+        quantity: cartItem.quantity,
+        price: cartItem.sku.price,
+        productId: cartItem.sku.productId,
+        productName: cartItem.sku.product.name,
+        productThumb: cartItem.sku.image || '',
+        variants: cartItem.sku.value ? [{ name: 'Variant', value: cartItem.sku.value }] : undefined,
+      }
+
+      brandGroupsMap.get(brandId)!.items.push(checkoutItem)
+      brandGroupsMap.get(brandId)!.totalPrice += cartItem.sku.price * cartItem.quantity
+    }
+
+    // STEP 6: Calculate totals and apply discounts
+    const brandGroups = Array.from(brandGroupsMap.values())
+
+    for (const brandGroup of brandGroups) {
+      checkoutOrder.totalPrice += brandGroup.totalPrice
+
+      // Apply discount if discount code is provided
+      if (discountCode) {
+        const products = brandGroup.items.map((item) => ({
+          productId: item.productId,
+          skuId: item.skuId,
+          quantity: item.quantity,
+          price: item.price,
+        }))
+
+        try {
+          const { discountAmount } = await this.discountService.getDiscountAmount({
+            products,
+            userId,
+            code: discountCode,
+          })
+          brandGroup.discountAmount = discountAmount
+        } catch (error) {
+          // If discount is invalid, set discount amount to 0
+          brandGroup.discountAmount = 0
+        }
+      }
+
+      brandGroup.finalPrice = brandGroup.totalPrice - brandGroup.discountAmount
+      checkoutOrder.totalDiscount += brandGroup.discountAmount
+      checkoutOrder.totalCheckout += brandGroup.finalPrice
+    }
+
+    // Add shipping fee to total checkout
+    checkoutOrder.totalCheckout += checkoutOrder.feeShip
+
+    return {
+      brandGroups,
+      checkoutOrder,
     }
   }
 }

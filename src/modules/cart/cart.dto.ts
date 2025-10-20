@@ -7,6 +7,8 @@ import {
   GetCartItemParamsSchema,
   UpdateCartItemBodySchema,
   DeleteCartBodySchema,
+  CheckoutReviewBodySchema,
+  CheckoutReviewResSchema,
 } from 'src/modules/cart/models/cart.model'
 import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
@@ -23,3 +25,6 @@ export class AddToCartBodyDTO extends createZodDto(AddToCartBodySchema) {}
 export class UpdateCartItemBodyDTO extends createZodDto(UpdateCartItemBodySchema) {}
 
 export class DeleteCartBodyDTO extends createZodDto(DeleteCartBodySchema) {}
+
+export class CheckoutReviewBodyDTO extends createZodDto(CheckoutReviewBodySchema) {}
+export class CheckoutReviewResDTO extends createResponseDTO(CheckoutReviewResSchema) {}

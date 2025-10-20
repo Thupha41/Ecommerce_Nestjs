@@ -27,4 +27,21 @@ export class DiscountService {
   async list(query: GetDiscountsQueryType): Promise<GetAllDiscountsResType> {
     return this.discountRepo.list(query)
   }
+
+  async getDiscountAmount({
+    products,
+    userId,
+    code,
+  }: {
+    products: Array<{
+      productId: number
+      skuId: number
+      quantity: number
+      price: number
+    }>
+    userId: number
+    code: string
+  }): Promise<{ totalPrice: number; discountAmount: number }> {
+    return this.discountRepo.getDiscountAmount({ products, userId, code })
+  }
 }

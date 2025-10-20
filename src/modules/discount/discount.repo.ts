@@ -440,6 +440,96 @@ export class DiscountRepo {
       throw error
     }
   }
+
+  async getDiscountAmount({
+    products,
+    userId,
+    code,
+  }: {
+    products: Array<{
+      productId: number
+      skuId: number
+      quantity: number
+      price: number
+    }>
+    userId: number
+    code: string
+  }): Promise<{ totalPrice: number; discountAmount: number }> {
+    // Find discount by code
+    const discount = await this.prismaService.discount.findFirst({
+      where: {
+        code,
+        isActive: true,
+        deletedAt: null,
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+      },
+    })
+
+    if (!discount) {
+      return { totalPrice: 0, discountAmount: 0 }
+    }
+
+    // Check if discount has reached max uses
+    if (discount.usedCount >= discount.maxUses) {
+      return { totalPrice: 0, discountAmount: 0 }
+    }
+
+    // Calculate total order value
+    const totalOrderValue = products.reduce(
+      (total, product) => total + product.price * product.quantity,
+      0,
+    )
+
+    // Check minimum order value
+    if (totalOrderValue < Number(discount.minOrderValue)) {
+      return { totalPrice: totalOrderValue, discountAmount: 0 }
+    }
+
+    // Check if discount applies to specific products
+    if (discount.applyTo === 'SPECIFIC') {
+      const discountSkus = await this.prismaService.discount.findUnique({
+        where: { id: discount.id },
+        include: { skus: true },
+      })
+
+      if (discountSkus?.skus) {
+        const applicableProducts = products.filter((product) =>
+          discountSkus.skus.some((sku) => sku.id === product.skuId),
+        )
+
+        if (applicableProducts.length === 0) {
+          return { totalPrice: totalOrderValue, discountAmount: 0 }
+        }
+
+        const applicableTotal = applicableProducts.reduce(
+          (total, product) => total + product.price * product.quantity,
+          0,
+        )
+
+        const discountAmount =
+          discount.type === 'PERCENTAGE'
+            ? (applicableTotal * Number(discount.value)) / 100
+            : Number(discount.value)
+
+        return {
+          totalPrice: totalOrderValue,
+          discountAmount: Math.min(discountAmount, applicableTotal),
+        }
+      }
+    }
+
+    // Apply discount to all products
+    const discountAmount =
+      discount.type === 'PERCENTAGE'
+        ? (totalOrderValue * Number(discount.value)) / 100
+        : Number(discount.value)
+
+    return {
+      totalPrice: totalOrderValue,
+      discountAmount: Math.min(discountAmount, totalOrderValue),
+    }
+  }
 }
 
 // async getDiscountAmount({ products, code }: GetDiscountAmountReqBody) {
