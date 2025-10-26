@@ -93,7 +93,6 @@ model User {
   createdOrders               Order[]               @relation("OrderCreatedBy")
   updatedOrders               Order[]               @relation("OrderUpdatedBy")
   deletedOrders               Order[]               @relation("OrderDeletedBy")
-  soldOrders                  Order[]               @relation("Shop")
   createdUserTranslations     UserTranslation[]     @relation("UserTranslationCreatedBy")
   updatedUserTranslations     UserTranslation[]     @relation("UserTranslationUpdatedBy")
   deletedUserTranslations     UserTranslation[]     @relation("UserTranslationDeletedBy")
@@ -506,8 +505,6 @@ model Order {
   discounts   Discount[]
   /// [Receiver]
   receiver    Json
-  shopId      Int?
-  shop        User?                @relation("Shop", fields: [shopId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   paymentId   Int
   payment     Payment              @relation(fields: [paymentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdById Int?
@@ -529,6 +526,7 @@ model Payment {
   id        Int           @id @default(autoincrement())
   orders    Order[]
   status    PaymentStatus
+  paymentMethod  PaymentMethod
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 }
@@ -675,4 +673,9 @@ enum HTTPMethod {
 enum MediaType {
   IMAGE
   VIDEO
+}
+
+enum PaymentMethod {
+  CASH
+  BANK
 }

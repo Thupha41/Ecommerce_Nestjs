@@ -19,7 +19,6 @@ export const OrderSchema = z.object({
     phone: z.string(),
     address: z.string(),
   }),
-  shopId: z.number().nullable(),
   paymentId: z.number(),
 
   createdById: z.number().nullable(),

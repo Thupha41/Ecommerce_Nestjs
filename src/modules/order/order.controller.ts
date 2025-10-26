@@ -15,6 +15,7 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { ApiBearerAuth, ApiQuery, ApiParam, ApiBody, ApiOperation } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
+import { SkipThrottle } from '@nestjs/throttler'
 
 @ApiBearerAuth()
 @Controller('orders')
@@ -22,6 +23,7 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
+  @SkipThrottle()
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, type: String })
@@ -33,6 +35,7 @@ export class OrderController {
   }
 
   @Get(':orderId')
+  @SkipThrottle()
   @ApiParam({ name: 'orderId', required: true, type: Number })
   @ApiOperation({ summary: 'Get order detail' })
   @ZodSerializerDto(GetOrderDetailResDTO)
@@ -52,6 +55,7 @@ export class OrderController {
   }
 
   @Post()
+  @SkipThrottle()
   @ApiBody({ type: CreateOrderBodyDTO })
   @ResponseMessage('Order created successfully')
   @ApiOperation({ summary: 'Create order' })

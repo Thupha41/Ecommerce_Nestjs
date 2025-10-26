@@ -12,10 +12,13 @@ import {
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
+import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller('delivery-info')
 @ApiBearerAuth()
 @ApiTags('Delivery Info')
+
 export class DeliveryInfoController {
   constructor(private readonly deliveryInfoService: DeliveryInfoService) {}
 

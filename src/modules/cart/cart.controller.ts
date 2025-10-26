@@ -20,8 +20,9 @@ import { SkipThrottle } from '@nestjs/throttler'
 
 @ApiBearerAuth()
 @ApiTags('Cart')
-@Controller('cart')
 @SkipThrottle()
+@Controller('cart')
+
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 

@@ -6,7 +6,6 @@ import {
   OutOfStockSKUException,
   OrderNotFoundException,
   ProductNotFoundException,
-  SKUNotBelongToShopException,
 } from 'src/modules/order/models/order.error.model'
 import {
   CancelOrderResType,
@@ -15,6 +14,7 @@ import {
   GetOrderListResType,
   CreateOrderBodyType,
   CreateOrderResType,
+  BrandGroupType,
 } from 'src/modules/order/models/order.model'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { PrismaService } from 'src/shared/services/prisma.service'
@@ -43,7 +43,15 @@ export class OrderRepo {
     const data$ = await this.prismaService.order.findMany({
       where,
       include: {
-        items: true,
+        items: {
+          include: {
+            product: {
+              include: {
+                brand: true,
+              },
+            },
+          },
+        },
       },
       skip,
       take,
@@ -52,8 +60,37 @@ export class OrderRepo {
       },
     })
     const [data, totalItems] = await Promise.all([data$, totalItem$])
+    
+    // Group items by brand for each order
+    const ordersWithBrandGroups = data.map((order) => {
+      const brandGroupsMap = new Map<number, BrandGroupType>()
+      
+      for (const item of order.items) {
+        const brandId = item.product?.brandId
+        if (!brandId || !item.product?.brand) continue
+        
+        if (!brandGroupsMap.has(brandId)) {
+          brandGroupsMap.set(brandId, {
+            brandId,
+            brandName: item.product.brand.name,
+            brandLogo: item.product.brand.logo || '',
+            items: [],
+          })
+        }
+        
+        brandGroupsMap.get(brandId)!.items.push(item)
+      }
+      
+      const { items, ...orderWithoutItems } = order
+      
+      return {
+        ...orderWithoutItems,
+        brandGroups: Array.from(brandGroupsMap.values()),
+      }
+    })
+    
     return {
-      data,
+      data: ordersWithBrandGroups,
       page,
       limit,
       totalItems,
@@ -69,13 +106,46 @@ export class OrderRepo {
         deletedAt: null,
       },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: {
+              include: {
+                brand: true,
+              },
+            },
+          },
+        },
       },
     })
     if (!order) {
       throw OrderNotFoundException
     }
-    return order
+    
+    // Group items by brand
+    const brandGroupsMap = new Map<number, BrandGroupType>()
+    
+    for (const item of order.items) {
+      const brandId = item.product?.brandId
+      if (!brandId || !item.product?.brand) continue
+      
+      if (!brandGroupsMap.has(brandId)) {
+        brandGroupsMap.set(brandId, {
+          brandId,
+          brandName: item.product.brand.name,
+          brandLogo: item.product.brand.logo || '',
+          items: [],
+        })
+      }
+      
+      brandGroupsMap.get(brandId)!.items.push(item)
+    }
+    
+    const { items, ...orderWithoutItems } = order
+    
+    return {
+      ...orderWithoutItems,
+      brandGroups: Array.from(brandGroupsMap.values()),
+    }
   }
 
   async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
@@ -120,14 +190,12 @@ export class OrderRepo {
     // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
     // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
     // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
-    // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
-    // 5. Tạo order
-    // 6. Xóa cartItem
+    // 4. Tạo order
+    // 5. Xóa cartItem
 
-    const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat()
     const cartItems = await this.prismaService.cartItem.findMany({
       where: {
-        id: { in: allBodyCartItemIds },
+        id: { in: body.cartItemIds },
         userId,
       },
       include: {
@@ -144,7 +212,7 @@ export class OrderRepo {
     })
 
     // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
-    if (cartItems.length !== allBodyCartItemIds.length) {
+    if (cartItems.length !== body.cartItemIds.length) {
       throw NotFoundCartItemException
     }
 
@@ -168,79 +236,66 @@ export class OrderRepo {
       throw ProductNotFoundException
     }
 
-    // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
-    const cartItemMap = new Map<number, (typeof cartItems)[0]>()
-    cartItems.forEach((item) => {
-      cartItemMap.set(item.id, item)
-    })
-    const isValidShop = body.every((item) => {
-      const bodyCartItemIds = item.cartItemIds
-      return bodyCartItemIds.every((cartItemId) => {
-        // Neu đã đến bước này thì cartItem luôn luôn có giá trị
-        // Vì chúng ta đã so sánh với allBodyCartItems.length ở trên rồi
-        const cartItem = cartItemMap.get(cartItemId)!
-        return item.shopId === cartItem.sku.createdById
-      })
-    })
-    if (!isValidShop) {
-      throw SKUNotBelongToShopException
-    }
-    // 5. Tạo order và xóa cartItem trong transaction để đảm bảo tính toàn vẹn dữ liệu
-    const [paymentId, orders] = await this.prismaService.$transaction(async (tx) => {
+    // 4. Tạo order và xóa cartItem trong transaction để đảm bảo tính toàn vẹn dữ liệu
+    const [paymentId, order] = await this.prismaService.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           status: PaymentStatus.PENDING,
+          paymentMethod: body.paymentMethod,
         },
       })
-      const order$ = Promise.all(
-        body.map((item) =>
-          tx.order.create({
-            data: {
-              userId,
-              status: OrderStatus.PENDING_PAYMENT,
-              receiver: item.receiver,
-              createdById: userId,
-              shopId: item.shopId,
-              paymentId: payment.id,
-              items: {
-                create: item.cartItemIds.map((cartItemId) => {
-                  const cartItem = cartItemMap.get(cartItemId)!
+
+      const cartItemMap = new Map<number, (typeof cartItems)[0]>()
+      cartItems.forEach((item) => {
+        cartItemMap.set(item.id, item)
+      })
+
+      const order = await tx.order.create({
+        data: {
+          userId,
+          status: OrderStatus.PENDING_PAYMENT,
+          receiver: body.receiver,
+          createdById: userId,
+          paymentId: payment.id,
+          items: {
+            create: body.cartItemIds.map((cartItemId) => {
+              const cartItem = cartItemMap.get(cartItemId)!
+              return {
+                productName: cartItem.sku.product.name,
+                skuPrice: cartItem.sku.price,
+                image: cartItem.sku.image,
+                skuId: cartItem.sku.id,
+                skuValue: cartItem.sku.value,
+                quantity: cartItem.quantity,
+                productId: cartItem.sku.product.id,
+                productTranslations: cartItem.sku.product.productTranslations.map((translation) => {
                   return {
-                    productName: cartItem.sku.product.name,
-                    skuPrice: cartItem.sku.price,
-                    image: cartItem.sku.image,
-                    skuId: cartItem.sku.id,
-                    skuValue: cartItem.sku.value,
-                    quantity: cartItem.quantity,
-                    productId: cartItem.sku.product.id,
-                    productTranslations: cartItem.sku.product.productTranslations.map((translation) => {
-                      return {
-                        id: translation.id,
-                        name: translation.name,
-                        description: translation.description,
-                        languageId: translation.languageId,
-                      }
-                    }),
+                    id: translation.id,
+                    name: translation.name,
+                    description: translation.description,
+                    languageId: translation.languageId,
                   }
                 }),
-              },
-              products: {
-                connect: item.cartItemIds.map((cartItemId) => {
-                  const cartItem = cartItemMap.get(cartItemId)!
-                  return {
-                    id: cartItem.sku.product.id,
-                  }
-                }),
-              },
-            },
-          }),
-        ),
-      )
+              }
+            }),
+          },
+          products: {
+            connect: body.cartItemIds.map((cartItemId) => {
+              const cartItem = cartItemMap.get(cartItemId)!
+              return {
+                id: cartItem.sku.product.id,
+              }
+            }),
+          },
+        },
+      })
+
       const cartItem$ = tx.cartItem.deleteMany({
         where: {
-          id: { in: allBodyCartItemIds },
+          id: { in: body.cartItemIds },
         },
       })
+
       const sku$ = Promise.all(
         cartItems.map((item) => {
           return tx.sKU.update({
@@ -253,14 +308,15 @@ export class OrderRepo {
           })
         }),
       )
+
       const cancelPaymentJob$ = await this.orderProducer.addCancelPaymentJob(payment.id)
 
-      const [order] = await Promise.all([order$, cartItem$, sku$, cancelPaymentJob$])
+      await Promise.all([cartItem$, sku$, cancelPaymentJob$])
       return [payment.id, order]
     })
 
     return {
-      orders,
+      orders: [order],
       paymentId,
     }
   }
