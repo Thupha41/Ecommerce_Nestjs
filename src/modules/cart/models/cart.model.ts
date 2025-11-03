@@ -94,7 +94,6 @@ export const CheckoutBrandGroupSchema = z.object({
 
 export const CheckoutOrderSchema = z.object({
   totalPrice: z.number(),
-  feeShip: z.number(),
   totalDiscount: z.number(),
   totalCheckout: z.number(),
 })

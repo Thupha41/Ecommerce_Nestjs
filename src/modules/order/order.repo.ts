@@ -17,6 +17,7 @@ import {
   BrandGroupType,
 } from 'src/modules/order/models/order.model'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
+import { PaymentMethod } from 'src/shared/constants/payment.constant'
 import { PrismaService } from 'src/shared/services/prisma.service'
 import { OrderProducer } from './order.producer'
 
@@ -90,7 +91,7 @@ export class OrderRepo {
     })
     
     return {
-      data: ordersWithBrandGroups,
+      items: ordersWithBrandGroups,
       page,
       limit,
       totalItems,
@@ -309,7 +310,10 @@ export class OrderRepo {
         }),
       )
 
-      const cancelPaymentJob$ = await this.orderProducer.addCancelPaymentJob(payment.id)
+      // Only add cancel payment job if payment method is not CASH
+      const cancelPaymentJob$ = payment.paymentMethod !== PaymentMethod.CASH 
+        ? this.orderProducer.addCancelPaymentJob(payment.id)
+        : Promise.resolve(null)
 
       await Promise.all([cartItem$, sku$, cancelPaymentJob$])
       return [payment.id, order]

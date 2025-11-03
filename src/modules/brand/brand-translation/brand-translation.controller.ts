@@ -11,7 +11,9 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
+import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller('brand-translations')
 @ApiTags('Brand Translations')
 @ApiBearerAuth()

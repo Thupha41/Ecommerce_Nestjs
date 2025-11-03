@@ -6,7 +6,9 @@ import { ResponseMessage } from 'src/shared/decorators/response-message.decorato
 import { ZodSerializerDto } from 'nestjs-zod'
 import { Auth } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
+import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller('payment')
 @ApiTags('Payment')
 export class PaymentController {

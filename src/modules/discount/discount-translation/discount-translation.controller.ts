@@ -10,8 +10,10 @@ import {
 import { DiscountTranslationService } from 'src/modules/discount/discount-translation/discount-translation.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
+import { SkipThrottle } from '@nestjs/throttler'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 
+@SkipThrottle()
 @Controller('discount-translations')
 @ApiTags('Discount Translations')
 @ApiBearerAuth()

@@ -446,7 +446,6 @@ export class CartRepository {
     // STEP 3: Initialize checkout order
     const checkoutOrder = {
       totalPrice: 0,
-      feeShip: 25000,
       totalDiscount: 0,
       totalCheckout: 0,
     }
@@ -520,8 +519,6 @@ export class CartRepository {
       checkoutOrder.totalCheckout += brandGroup.finalPrice
     }
 
-    // Add shipping fee to total checkout
-    checkoutOrder.totalCheckout += checkoutOrder.feeShip
 
     return {
       brandGroups,

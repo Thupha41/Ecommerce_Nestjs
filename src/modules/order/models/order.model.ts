@@ -38,7 +38,7 @@ export const PaymentMethodSchema = z.enum([
 ])
 
 export const GetOrderListResSchema = z.object({
-  data: z.array(
+  items: z.array(
     OrderSchema.extend({
       brandGroups: z.array(BrandGroupSchema),
     }).omit({

@@ -17,9 +17,11 @@ import { ResponseMessage } from 'src/shared/decorators/response-message.decorato
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
+import { SkipThrottle } from '@nestjs/throttler'
 
 @ApiTags('Reviews')
 @ApiBearerAuth()
+@SkipThrottle()
 @Controller('reviews')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}

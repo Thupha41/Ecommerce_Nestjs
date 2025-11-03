@@ -15,6 +15,7 @@ import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiQuery, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { SkipThrottle } from '@nestjs/throttler'
+@SkipThrottle()
 @Controller('brands')
 @ApiTags('Brands')
 @ApiBearerAuth()

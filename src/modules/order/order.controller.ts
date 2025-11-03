@@ -18,12 +18,12 @@ import { ResponseMessage } from 'src/shared/decorators/response-message.decorato
 import { SkipThrottle } from '@nestjs/throttler'
 
 @ApiBearerAuth()
+@SkipThrottle()
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
-  @SkipThrottle()
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, type: String })
@@ -35,7 +35,6 @@ export class OrderController {
   }
 
   @Get(':orderId')
-  @SkipThrottle()
   @ApiParam({ name: 'orderId', required: true, type: Number })
   @ApiOperation({ summary: 'Get order detail' })
   @ZodSerializerDto(GetOrderDetailResDTO)
@@ -55,7 +54,6 @@ export class OrderController {
   }
 
   @Post()
-  @SkipThrottle()
   @ApiBody({ type: CreateOrderBodyDTO })
   @ResponseMessage('Order created successfully')
   @ApiOperation({ summary: 'Create order' })

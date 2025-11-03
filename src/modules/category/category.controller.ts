@@ -16,6 +16,7 @@ import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller('categories')
 @ApiTags('Categories')
 @ApiBearerAuth()

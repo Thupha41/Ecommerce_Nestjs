@@ -15,6 +15,7 @@ import { ResponseMessage } from 'src/shared/decorators/response-message.decorato
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { SkipThrottle } from '@nestjs/throttler'
 
+@SkipThrottle()
 @Controller('discounts')
 @ApiBearerAuth()
 @ApiTags('Discounts')
@@ -22,7 +23,6 @@ export class DiscountController {
   constructor(private readonly discountService: DiscountService) {}
 
   @Get()
-  @SkipThrottle()
   @ZodSerializerDto(GetAllDiscountsResDTO)
   @ResponseMessage('Discounts retrieved successfully')
   @ApiOperation({ summary: 'Get all discounts with filtering and pagination' })

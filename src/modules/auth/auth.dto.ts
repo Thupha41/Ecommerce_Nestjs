@@ -27,7 +27,7 @@ export class LoginResDTO extends createResponseDTO(LoginResSchema) {}
 
 export class RefreshTokenBodyDTO extends createZodDto(RefreshTokenBodySchema) {}
 
-export class RefreshTokenResDTO extends createZodDto(RefreshTokenResSchema) {}
+export class RefreshTokenResDTO extends createResponseDTO(RefreshTokenResSchema) {}
 
 export class LogoutBodyDTO extends createZodDto(LogoutBodySchema) {}
 
