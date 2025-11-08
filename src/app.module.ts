@@ -37,6 +37,8 @@ import envConfig from './shared/config'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard'
 import { ReviewModule } from './modules/review/review.module'
+import { MessageModule } from './modules/message/message.module'
+import { LikeModule } from './modules/like/like.module'
 import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronjob'
 import KeyvRedis from '@keyv/redis'
 import { Keyv } from 'keyv'
@@ -68,6 +70,8 @@ import pino from 'pino'
     OrderModule,
     PaymentModule,
     ReviewModule,
+    MessageModule,
+    LikeModule,
     LoggerModule.forRoot({
       pinoHttp: {
         serializers: {

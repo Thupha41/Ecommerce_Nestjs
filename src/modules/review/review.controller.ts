@@ -2,7 +2,6 @@ import { Controller, Get, Param, Post, Body, Query, Put, Delete } from '@nestjs/
 import { ReviewService } from 'src/modules/review/review.service'
 import { PaginationQueryDTO } from 'src/shared/dtos/request.dto'
 import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger'
-import { SkipThrottle } from '@nestjs/throttler'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
   CreateReviewBodyDTO,
