@@ -8,8 +8,8 @@ import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiParam, ApiBody, ApiTags } from '@nestjs/swagger'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { SkipThrottle } from '@nestjs/throttler'
-@SkipThrottle()
+
+
 @Controller('profile')
 @UseGuards(AccessTokenGuard)
 @ApiBearerAuth()

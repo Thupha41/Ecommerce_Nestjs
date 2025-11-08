@@ -165,6 +165,6 @@ Tài liệu này tổng hợp chức năng và endpoint chính của hệ thốn
 
 ### Ghi chú triển khai
 - Tất cả DTO sử dụng Zod để chuẩn hóa validate input và serialize output.
-- Một số GET công khai được gắn `@IsPublic()` và cho phép bỏ qua throttle với `@SkipThrottle()` khi cần.
+- Một số GET công khai được gắn `@IsPublic()` và cho phép bỏ qua throttle với `` khi cần.
 - Các endpoint ghi nhận `createdById`, `updatedById`, `deletedById` để truy vết.
 - I18n cho phép truyền `?lang=` hoặc header `Accept-Language` để lấy nội dung bản dịch tương ứng.

@@ -16,11 +16,11 @@ import {
 import { PaginationQueryDTO } from 'src/shared/dtos/request.dto'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
-import { SkipThrottle } from '@nestjs/throttler'
+
 
 @ApiBearerAuth()
 @ApiTags('Cart')
-@SkipThrottle()
+
 @Controller('cart')
 
 export class CartController {

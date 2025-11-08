@@ -14,8 +14,8 @@ import { PaginationQueryDTO } from 'src/shared/dtos/request.dto'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiQuery, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { SkipThrottle } from '@nestjs/throttler'
-@SkipThrottle()
+
+
 @Controller('brands')
 @ApiTags('Brands')
 @ApiBearerAuth()
@@ -24,7 +24,7 @@ export class BrandController {
 
   @Get()
   @IsPublic()
-  @SkipThrottle()
+  
   @ZodSerializerDto(GetBrandsResDTO)
   @ResponseMessage('Brands fetched successfully')
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -36,7 +36,7 @@ export class BrandController {
 
   @Get(':brandId')
   @IsPublic()
-  @SkipThrottle()
+  
   @ZodSerializerDto(GetBrandDetailResDTO)
   @ResponseMessage('Brand fetched successfully')
   @ApiParam({ name: 'brandId', required: true, type: Number })

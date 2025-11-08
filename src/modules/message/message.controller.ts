@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Query, Body } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags, ApiBody } from '@nestjs/swagger'
-import { SkipThrottle } from '@nestjs/throttler'
+
 import { ZodSerializerDto } from 'nestjs-zod'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { GetMessagesQueryDTO, GetMessagesResDTO, CreateMessageBodyDTO, CreateMessageResDTO } from './message.dto'
@@ -8,7 +8,7 @@ import { MessageService } from './message.service'
 
 @ApiBearerAuth()
 @ApiTags('Messages')
-@SkipThrottle()
+
 @Controller('messages')
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Query, Body } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags, ApiBody } from '@nestjs/swagger'
-import { SkipThrottle } from '@nestjs/throttler'
+
 import { ZodSerializerDto } from 'nestjs-zod'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
@@ -9,7 +9,7 @@ import { LikeService } from './like.service'
 
 @ApiBearerAuth()
 @ApiTags('Likes')
-@SkipThrottle()
+
 @Controller('likes')
 export class LikeController {
   constructor(private readonly likeService: LikeService) {}

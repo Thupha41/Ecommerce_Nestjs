@@ -11,9 +11,9 @@ import { CategoryTranslationService } from 'src/modules/category/category-transl
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { SkipThrottle } from '@nestjs/throttler'
 
-@SkipThrottle()
+
+
 @Controller('category-translations')
 @ApiTags('Category Translations')
 @ApiBearerAuth()

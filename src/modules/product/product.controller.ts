@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common'
-import { SkipThrottle } from '@nestjs/throttler'
+
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
   GetProductDetailResDTO,
@@ -11,8 +11,10 @@ import { ProductService } from 'src/modules/product/product.service'
 import { ApiParam, ApiQuery, ApiTags, ApiOperation } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+import { ApiBearerAuth } from '@nestjs/swagger'
 
-@SkipThrottle()
+
+@ApiBearerAuth()
 @Controller('products')
 @ApiTags('Products')
 export class ProductController {

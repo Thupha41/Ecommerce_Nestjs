@@ -13,9 +13,9 @@ import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { SkipThrottle } from '@nestjs/throttler'
 
-@SkipThrottle()
+
+
 @Controller('languages')
 @ApiBearerAuth()
 @ApiTags('Languages')

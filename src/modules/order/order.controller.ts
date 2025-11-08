@@ -15,10 +15,10 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { ApiBearerAuth, ApiQuery, ApiParam, ApiBody, ApiOperation } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { SkipThrottle } from '@nestjs/throttler'
+
 
 @ApiBearerAuth()
-@SkipThrottle()
+
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}

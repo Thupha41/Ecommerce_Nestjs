@@ -17,9 +17,9 @@ import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
 import { ApiBearerAuth, ApiParam, ApiTags, ApiBody, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { UseGuards } from '@nestjs/common'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { SkipThrottle } from '@nestjs/throttler'
 
-@SkipThrottle()
+
+
 @Controller('manage-product/products')
 @UseGuards(AccessTokenGuard)
 @ApiBearerAuth()

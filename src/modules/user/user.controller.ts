@@ -15,9 +15,9 @@ import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { GetUserProfileResDTO, UpdateProfileResDTO } from 'src/shared/dtos/shared-user.dto'
 import { ApiBearerAuth, ApiParam, ApiQuery, ApiBody, ApiTags } from '@nestjs/swagger'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
-import { SkipThrottle } from '@nestjs/throttler'
 
-@SkipThrottle()
+
+
 @Controller('users')
 @UseGuards(AccessTokenGuard)
 @ApiBearerAuth()

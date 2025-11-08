@@ -34,8 +34,6 @@ import { PaymentModule } from './modules/payment/payment.module'
 import { BullModule } from '@nestjs/bullmq'
 import { PaymentConsumer } from './queues/payment.consumer'
 import envConfig from './shared/config'
-import { ThrottlerModule } from '@nestjs/throttler'
-import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard'
 import { ReviewModule } from './modules/review/review.module'
 import { MessageModule } from './modules/message/message.module'
 import { LikeModule } from './modules/like/like.module'
@@ -123,20 +121,6 @@ import pino from 'pino'
         url: envConfig.REDIS_URL,
       },
     }),
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          name: 'short',
-          ttl: 60000, // 1 minute
-          limit: 5,
-        },
-        {
-          name: 'long',
-          ttl: 120000, // 2 minutes
-          limit: 7,
-        },
-      ],
-    }),
   ],
   controllers: [AppController],
   providers: [
@@ -165,10 +149,10 @@ import pino from 'pino'
       provide: APP_FILTER,
       useClass: CatchEverythingFilter,
     },
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerBehindProxyGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerBehindProxyGuard,
+    // },
     PaymentConsumer,
     RemoveRefreshTokenCronjob,
   ],
