@@ -7,13 +7,18 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 export class MessageRepo {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(fromUserId: number, data: CreateMessageBodyType): Promise<CreateMessageResType> {
+  async create(data: CreateMessageBodyType): Promise<CreateMessageResType> {
+    const createData: any = {
+      fromUserId: data.userId,
+      content: data.content,
+    }
+
+    if (data.metadata !== undefined) {
+      createData.metadata = data.metadata
+    }
+
     const message = await this.prismaService.message.create({
-      data: {
-        fromUserId,
-        content: data.content,
-        metadata: data.metadata || null,
-      },
+      data: createData,
       include: {
         fromUser: {
           select: {
@@ -24,9 +29,13 @@ export class MessageRepo {
           },
         },
       },
-    })
+    }) as any
 
-    return message
+    // Ensure metadata is included in response
+    return {
+      ...message,
+      metadata: message.metadata ?? null,
+    } as CreateMessageResType
   }
 
   async list(query: GetMessagesQueryType): Promise<GetMessagesResType> {
@@ -66,7 +75,10 @@ export class MessageRepo {
     ])
 
     return {
-      items: data,
+      items: data.map((item: any) => ({
+        ...item,
+        metadata: item.metadata ?? null,
+      })) as GetMessagesResType['items'],
       totalItems,
       page: page,
       limit: limit,

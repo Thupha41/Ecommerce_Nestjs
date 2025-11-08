@@ -17,7 +17,8 @@ const ClientModule = [
   'LANGUAGE',
   'DELIVERY-INFO',
   'LIKE',
-  'MESSAGE',
+  'PRODUCTS',
+  'MESSAGES',
 ]
 const prisma = new PrismaService()
 

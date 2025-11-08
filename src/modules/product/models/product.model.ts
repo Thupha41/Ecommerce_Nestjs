@@ -71,6 +71,7 @@ export const GetProductsResSchema = z.object({
   items: z.array(
     ProductSchema.extend({
       productTranslations: z.array(ProductTranslationSchema),
+      isLiked: z.boolean(),
     }),
   ),
   totalItems: z.number(),
@@ -90,6 +91,7 @@ export const GetProductDetailResSchema = ProductSchema.extend({
   skus: z.array(SKUSchema),
   categories: z.array(CategoryIncludeTranslationSchema),
   brand: BrandIncludeTranslationSchema,
+  isLiked: z.boolean(),
 })
 
 /**

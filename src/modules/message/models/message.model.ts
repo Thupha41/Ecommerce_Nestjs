@@ -29,6 +29,7 @@ export const GetMessagesResSchema = z.object({
 })
 
 export const CreateMessageBodySchema = z.object({
+  userId: z.coerce.number().int().positive(),
   content: z.string().min(1),
   metadata: z.record(z.any()).optional(),
 }).strict()

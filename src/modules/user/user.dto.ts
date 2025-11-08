@@ -7,8 +7,9 @@ import {
   UpdateUserBodySchema,
 } from 'src/modules/user/models/user.model'
 import { UpdateProfileResDTO } from 'src/shared/dtos/shared-user.dto'
+import { createResponseDTO } from 'src/shared/dtos/response.dto'
 
-export class GetUsersResDTO extends createZodDto(GetUsersResSchema) {}
+export class GetUsersResDTO extends createResponseDTO(GetUsersResSchema) {}
 
 export class GetUsersQueryDTO extends createZodDto(GetUsersQuerySchema) {}
 

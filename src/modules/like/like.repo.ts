@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
-import { Prisma } from '@prisma/client'
 import { GetLikesQueryType, GetLikesResType, CreateLikeBodyType, LikeResType } from './models/like.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class LikeRepo {
@@ -39,14 +39,6 @@ export class LikeRepo {
         },
         update: {},
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-            },
-          },
           product: {
             select: {
               id: true,
@@ -84,14 +76,11 @@ export class LikeRepo {
     return null
   }
 
-  async list(query: GetLikesQueryType): Promise<GetLikesResType> {
-    const { page, limit, userId, productId, orderBy, sortBy } = query
-    const skip = (page - 1) * limit
-    const take = limit
+  async list(userId: number, query: GetLikesQueryType): Promise<GetLikesResType> {
+    const { productId, orderBy, sortBy } = query
 
-    const where: Prisma.LikeWhereInput = {}
-    if (userId) {
-      where.userId = userId
+    const where: Prisma.LikeWhereInput = {
+      userId: userId,
     }
     if (productId) {
       where.productId = productId
@@ -108,14 +97,6 @@ export class LikeRepo {
       this.prismaService.like.findMany({
         where,
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-            },
-          },
           product: {
             select: {
               id: true,
@@ -127,17 +108,12 @@ export class LikeRepo {
           },
         },
         orderBy: orderByClause,
-        skip,
-        take,
       }),
     ])
 
     return {
       items: data,
       totalItems,
-      page: page,
-      limit: limit,
-      totalPages: Math.ceil(totalItems / limit),
     }
   }
 }

@@ -10,8 +10,8 @@ export class LikeService {
     return this.likeRepo.likeOrDislike(userId, data)
   }
 
-  async list(query: GetLikesQueryType): Promise<GetLikesResType> {
-    return this.likeRepo.list(query)
+  async list(userId: number, query: GetLikesQueryType): Promise<GetLikesResType> {
+    return this.likeRepo.list(userId, query)
   }
 }
 

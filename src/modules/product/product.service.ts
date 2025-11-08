@@ -8,7 +8,7 @@ import { I18nContext } from 'nestjs-i18n'
 export class ProductService {
   constructor(private productRepo: ProductRepo) {}
 
-  async list(props: { query: GetProductsQueryType }) {
+  async list(props: { query: GetProductsQueryType; userId?: number }) {
     const data = await this.productRepo.list({
       page: props.query.page,
       limit: props.query.limit,
@@ -22,15 +22,17 @@ export class ProductService {
       createdById: props.query.createdById,
       orderBy: props.query.orderBy,
       sortBy: props.query.sortBy,
+      userId: props.userId,
     })
     return data
   }
 
-  async getDetail(props: { productId: number }) {
+  async getDetail(props: { productId: number; userId?: number }) {
     const product = await this.productRepo.getDetail({
       productId: props.productId,
       languageId: I18nContext.current()?.lang as string,
       isPublic: true,
+      userId: props.userId,
     })
     if (!product) {
       throw NotFoundRecordException

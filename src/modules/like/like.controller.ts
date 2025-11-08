@@ -16,16 +16,13 @@ export class LikeController {
 
   @Get()
   @ZodSerializerDto(GetLikesResDTO)
-  @ApiOperation({ summary: 'List likes', description: 'Get a list of likes with pagination and filtering' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'userId', required: false, type: Number })
+  @ApiOperation({ summary: 'Get likes by user', description: 'Get a list of likes for the current user with filtering' })
   @ApiQuery({ name: 'productId', required: false, type: Number })
   @ApiQuery({ name: 'orderBy', required: false, enum: ['asc', 'desc'] })
   @ApiQuery({ name: 'sortBy', required: false, enum: ['createdAt'] })
   @ResponseMessage('Likes fetched successfully')
-  list(@Query() query: GetLikesQueryDTO) {
-    return this.likeService.list(query)
+  list(@ActiveUser('userId') userId: number, @Query() query: GetLikesQueryDTO) {
+    return this.likeService.list(userId, query)
   }
 
   @Post()

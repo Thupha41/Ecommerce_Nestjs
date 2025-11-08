@@ -3,7 +3,6 @@ import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags, ApiBody } from '@nestjs
 import { SkipThrottle } from '@nestjs/throttler'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { GetMessagesQueryDTO, GetMessagesResDTO, CreateMessageBodyDTO, CreateMessageResDTO } from './message.dto'
 import { MessageService } from './message.service'
 
@@ -32,8 +31,8 @@ export class MessageController {
   @ZodSerializerDto(CreateMessageResDTO)
   @ApiOperation({ summary: 'Create message', description: 'Create a new message' })
   @ResponseMessage('Message created successfully')
-  create(@ActiveUser('userId') userId: number, @Body() body: CreateMessageBodyDTO) {
-    return this.messageService.create(userId, body)
+  create(@Body() body: CreateMessageBodyDTO) {
+    return this.messageService.create(body)
   }
 }
 

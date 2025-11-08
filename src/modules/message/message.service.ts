@@ -6,8 +6,8 @@ import { GetMessagesQueryType, CreateMessageBodyType, CreateMessageResType } fro
 export class MessageService {
   constructor(private readonly messageRepo: MessageRepo) {}
 
-  async create(fromUserId: number, data: CreateMessageBodyType): Promise<CreateMessageResType> {
-    return this.messageRepo.create(fromUserId, data)
+  async create(data: CreateMessageBodyType): Promise<CreateMessageResType> {
+    return this.messageRepo.create(data)
   }
 
   async list(query: GetMessagesQueryType) {

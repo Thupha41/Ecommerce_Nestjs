@@ -8,13 +8,12 @@ import {
   GetProductsResDTO,
 } from 'src/modules/product/product.dto'
 import { ProductService } from 'src/modules/product/product.service'
-import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { ApiParam, ApiQuery, ApiTags, ApiOperation } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
+import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 
 @SkipThrottle()
 @Controller('products')
-@IsPublic()
 @ApiTags('Products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -34,9 +33,10 @@ export class ProductController {
   @ApiQuery({ name: 'orderBy', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ResponseMessage('Products fetched successfully')
-  list(@Query() query: GetProductsQueryDTO) {
+  list(@Query() query: GetProductsQueryDTO, @ActiveUser('userId') userId?: number) {
     return this.productService.list({
       query,
+      userId,
     })
   }
 
@@ -45,9 +45,10 @@ export class ProductController {
   @ApiOperation({ summary: 'List detail product', description: 'Get product detail' })
   @ZodSerializerDto(GetProductDetailResDTO)
   @ResponseMessage('Product fetched successfully')
-  findById(@Param() params: GetProductParamsDTO) {
+  findById(@Param() params: GetProductParamsDTO, @ActiveUser('userId') userId?: number) {
     return this.productService.getDetail({
       productId: params.productId,
+      userId,
     })
   }
 }

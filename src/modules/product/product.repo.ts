@@ -29,6 +29,7 @@ export class ProductRepo {
     languageId,
     orderBy,
     sortBy,
+    userId,
   }: {
     limit: number
     page: number
@@ -42,6 +43,7 @@ export class ProductRepo {
     languageId: string
     orderBy: OrderByType
     sortBy: SortByType
+    userId?: number
   }): Promise<GetProductsResType> {
     const skip = (page - 1) * limit
     const take = limit
@@ -123,8 +125,29 @@ export class ProductRepo {
         take,
       }),
     ])
+
+    // Get liked product IDs for the user if userId is provided
+    let likedProductIds: number[] = []
+    if (userId) {
+      const likes = await this.prismaService.like.findMany({
+        where: {
+          userId,
+          productId: {
+            in: data.map((product) => product.id),
+          },
+        },
+        select: {
+          productId: true,
+        },
+      })
+      likedProductIds = likes.map((like) => like.productId)
+    }
+
     return {
-      items: data,
+      items: data.map((product) => ({
+        ...product,
+        isLiked: userId ? likedProductIds.includes(product.id) : false,
+      })),
       totalItems,
       page: page,
       limit: limit,
@@ -141,14 +164,16 @@ export class ProductRepo {
     })
   }
 
-  getDetail({
+  async getDetail({
     productId,
     languageId,
     isPublic,
+    userId,
   }: {
     productId: number
     languageId: string
     isPublic?: boolean
+    userId?: number
   }): Promise<GetProductDetailResType | null> {
     let where: Prisma.ProductWhereUniqueInput = {
       id: productId,
@@ -165,7 +190,7 @@ export class ProductRepo {
         OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
       }
     }
-    return this.prismaService.product.findUnique({
+    const product = await this.prismaService.product.findUnique({
       where,
       include: {
         productTranslations: {
@@ -195,6 +220,29 @@ export class ProductRepo {
         },
       },
     })
+
+    if (!product) {
+      return null
+    }
+
+    // Check if product is liked by user
+    let isLiked = false
+    if (userId) {
+      const like = await this.prismaService.like.findUnique({
+        where: {
+          userId_productId: {
+            userId,
+            productId,
+          },
+        },
+      })
+      isLiked = !!like
+    }
+
+    return {
+      ...product,
+      isLiked,
+    }
   }
 
   async create({
