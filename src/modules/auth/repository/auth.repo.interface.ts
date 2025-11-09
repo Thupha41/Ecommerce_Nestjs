@@ -31,6 +31,12 @@ export interface IAuthRepository {
 
   updateDevice(deviceId: number, payload: Partial<DeviceType>): Promise<DeviceType | null>
 
+  findDeviceByUserAgentAndIp(
+    userId: number,
+    userAgent: string,
+    ip: string,
+  ): Promise<DeviceType | null>
+
   deleteVerificationCode(
     where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null>

@@ -138,6 +138,20 @@ export class AuthRepository implements IAuthRepository {
     })
   }
 
+  async findDeviceByUserAgentAndIp(
+    userId: number,
+    userAgent: string,
+    ip: string,
+  ): Promise<DeviceType | null> {
+    return await this.prismaService.device.findFirst({
+      where: {
+        userId,
+        userAgent,
+        ip,
+      },
+    })
+  }
+
   async deleteVerificationCode(
     where: { id: number } | { email_type: { email: string; type: TypeOfVerificationCodeType } },
   ): Promise<VerificationCodeType | null> {

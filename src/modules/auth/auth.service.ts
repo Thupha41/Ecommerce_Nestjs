@@ -109,14 +109,30 @@ export class AuthService {
     }
   }
   async createDeviceAndTokens(userId: number, roleId: number, roleName: string, userAgent: string, ip: string) {
-    const device = await this.authRepository.createDevice({
-      userId,
-      userAgent,
-      ip,
-    })
+    // Kiểm tra xem device đã tồn tại chưa
+    let device = await this.authRepository.findDeviceByUserAgentAndIp(userId, userAgent, ip)
 
-    if (!device) {
-      throw FailedToCreateDeviceException
+    if (device) {
+      // Nếu device đã tồn tại, cập nhật lastActive và isActive
+      device = await this.authRepository.updateDevice(device.id, {
+        lastActive: new Date(),
+        isActive: true,
+      })
+
+      if (!device) {
+        throw FailedToCreateDeviceException
+      }
+    } else {
+      // Nếu device chưa tồn tại, tạo mới
+      device = await this.authRepository.createDevice({
+        userId,
+        userAgent,
+        ip,
+      })
+
+      if (!device) {
+        throw FailedToCreateDeviceException
+      }
     }
 
     return this.generateTokens({
