@@ -15,6 +15,8 @@ import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { GetUserProfileResDTO, UpdateProfileResDTO } from 'src/shared/dtos/shared-user.dto'
 import { ApiBearerAuth, ApiParam, ApiQuery, ApiBody, ApiTags } from '@nestjs/swagger'
 import { AccessTokenGuard } from 'src/shared/guards/access-token.guard'
+import { RoleName } from 'src/shared/constants/role.constants'
+import { UserStatus } from 'src/shared/constants/auth.constants'
 
 
 
@@ -28,11 +30,17 @@ export class UserController {
   @Get()
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'status', required: false, enum: [UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.BLOCKED] })
+  @ApiQuery({ name: 'role', required: false, enum: [RoleName.Admin, RoleName.Client] })
+  @ApiQuery({ name: 'search', required: false, type: String })
   @ZodSerializerDto(GetUsersResDTO)
   list(@Query() query: GetUsersQueryDTO) {
     return this.userService.list({
       page: query.page,
       limit: query.limit,
+      status: query.status,
+      role: query.role,
+      search: query.search,
     })
   }
 

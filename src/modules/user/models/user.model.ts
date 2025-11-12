@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { UserSchema } from 'src/shared/models/shared-user.model'
 import { RoleSchema } from 'src/shared/models/shared-role.model'
+import { UserStatus } from 'src/shared/constants/auth.constants'
+import { RoleName } from 'src/shared/constants/role.constants'
 
 export const GetUsersResSchema = z.object({
   data: z.array(
@@ -21,6 +23,9 @@ export const GetUsersQuerySchema = z
   .object({
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().default(10),
+    status: z.enum([UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.BLOCKED]).optional(),
+    role: z.enum([RoleName.Admin, RoleName.Client]).optional(),
+    search: z.string().optional(),
   })
   .strict()
 

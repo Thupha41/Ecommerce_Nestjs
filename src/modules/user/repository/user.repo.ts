@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { CreateUserBodyType, GetUsersQueryType, GetUsersResType } from 'src/modules/user/models/user.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 import { UserType } from 'src/shared/models/shared-user.model'
@@ -11,16 +12,35 @@ export class UserRepo implements IUserRepository {
   async list(pagination: GetUsersQueryType): Promise<GetUsersResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
+
+    const where: Prisma.UserWhereInput = {
+      deletedAt: null,
+    }
+
+    if (pagination.status) {
+      where.status = pagination.status
+    }
+
+    if (pagination.role) {
+      where.role = {
+        name: pagination.role,
+      }
+    }
+
+    if (pagination.search) {
+      where.OR = [
+        { email: { contains: pagination.search, mode: 'insensitive' } },
+        { name: { contains: pagination.search, mode: 'insensitive' } },
+        { phoneNumber: { contains: pagination.search, mode: 'insensitive' } },
+      ]
+    }
+
     const [totalItems, data] = await Promise.all([
       this.prismaService.user.count({
-        where: {
-          deletedAt: null,
-        },
+        where,
       }),
       this.prismaService.user.findMany({
-        where: {
-          deletedAt: null,
-        },
+        where,
         skip,
         take,
         include: {
