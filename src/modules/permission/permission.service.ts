@@ -25,6 +25,14 @@ export class PermissionService {
     return data
   }
 
+  async getModules() {
+    return await this.permissionRepository.getDistinctModules()
+  }
+
+  async getMethods() {
+    return await this.permissionRepository.getDistinctMethods()
+  }
+
   async findById(id: number) {
     const permission = await this.permissionRepository.findById(id)
     if (!permission) {

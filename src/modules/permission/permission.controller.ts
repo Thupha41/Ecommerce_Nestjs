@@ -15,7 +15,7 @@ import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiParam, ApiQuery, ApiBody, ApiTags } from '@nestjs/swagger'
 import { PermissionService } from './permission.service'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
-
+import { HTTPMethod } from 'src/shared/constants/permission.constants'
 @Controller('permissions')
 @UseGuards(AccessTokenGuard)
 @ApiBearerAuth()
@@ -34,15 +34,31 @@ export class PermissionController {
     })
   }
 
+  @Get('/modules')
+  @ResponseMessage('Modules retrieved successfully')
+  async getModules() {
+    return await this.permissionService.getModules()
+  }
+
+  @Get('/method')
+  @ResponseMessage('Methods retrieved successfully')
+  async getMethods() {
+    return await this.permissionService.getMethods()
+  }
+
   @Get('/')
   @ZodSerializerDto(GetPermissionResDTO)
   @ResponseMessage('Permission list successfully')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'module', required: false, type: String })
+  @ApiQuery({ name: 'method', required: false, enum: [HTTPMethod.GET, HTTPMethod.POST, HTTPMethod.PUT, HTTPMethod.DELETE, HTTPMethod.PATCH, HTTPMethod.OPTIONS, HTTPMethod.HEAD] })
   async list(@Query() query: GetPermissionQueryDTO) {
     return await this.permissionService.list({
       page: query.page,
       limit: query.limit,
+      module: query.module,
+      method: query.method,
     })
   }
 

@@ -29,4 +29,6 @@ export interface IPermissionRepository {
     },
     isHard?: boolean,
   ): Promise<PermissionType & { roles: { id: number }[] }>
+  getDistinctModules(): Promise<string[]>
+  getDistinctMethods(): Promise<string[]>
 }

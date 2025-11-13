@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import {
   CreatePermissionBodyType,
   GetPermissionsQueryType,
@@ -16,16 +17,25 @@ export class PermissionRepository implements IPermissionRepository {
   async list(pagination: GetPermissionsQueryType): Promise<GetPermissionsResType> {
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
+
+    const where: Prisma.PermissionWhereInput = {
+      deletedAt: null,
+    }
+
+    if (pagination.module) {
+      where.module = pagination.module
+    }
+
+    if (pagination.method) {
+      where.method = pagination.method
+    }
+
     const [totalItems, permissions] = await Promise.all([
       this.prismaService.permission.count({
-        where: {
-          deletedAt: null,
-        },
+        where,
       }),
       this.prismaService.permission.findMany({
-        where: {
-          deletedAt: null,
-        },
+        where,
         skip,
         take,
       }),
@@ -37,6 +47,32 @@ export class PermissionRepository implements IPermissionRepository {
       limit: pagination.limit,
       totalPages: Math.ceil(totalItems / pagination.limit),
     }
+  }
+
+  async getDistinctModules(): Promise<string[]> {
+    const permissions = await this.prismaService.permission.findMany({
+      where: {
+        deletedAt: null,
+      },
+      select: {
+        module: true,
+      },
+      distinct: ['module'],
+    })
+    return permissions.map((p) => p.module).filter((module) => module && module.trim() !== '')
+  }
+
+  async getDistinctMethods(): Promise<string[]> {
+    const permissions = await this.prismaService.permission.findMany({
+      where: {
+        deletedAt: null,
+      },
+      select: {
+        method: true,
+      },
+      distinct: ['method'],
+    })
+    return permissions.map((p) => p.method)
   }
 
   findById(id: number): Promise<PermissionType | null> {

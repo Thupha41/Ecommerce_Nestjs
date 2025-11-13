@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { PermissionSchema } from 'src/shared/models/shared-permission.model'
+import { HTTPMethod } from 'src/shared/constants/permission.constants'
 
 export const CreatePermissionBodySchema = PermissionSchema.pick({
   name: true,
@@ -12,6 +13,16 @@ export const GetPermissionQuerySchema = z
   .object({
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().default(10),
+    module: z.string().optional(),
+    method: z.enum([
+      HTTPMethod.GET,
+      HTTPMethod.POST,
+      HTTPMethod.PUT,
+      HTTPMethod.DELETE,
+      HTTPMethod.PATCH,
+      HTTPMethod.OPTIONS,
+      HTTPMethod.HEAD,
+    ]).optional(),
   })
   .strict()
 
