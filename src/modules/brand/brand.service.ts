@@ -1,18 +1,23 @@
 import { Injectable } from '@nestjs/common'
 import { BrandRepo } from 'src/modules/brand/brand.repo'
-import { CreateBrandBodyType, UpdateBrandBodyType } from 'src/modules/brand/models/brand.model'
+import { CreateBrandBodyType, UpdateBrandBodyType, GetBrandsQueryType } from 'src/modules/brand/models/brand.model'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
-import { PaginationQueryType } from 'src/shared/models/request.model'
 import { I18nContext } from 'nestjs-i18n'
 
 @Injectable()
 export class BrandService {
   constructor(private brandRepo: BrandRepo) {}
 
-  async list(pagination: PaginationQueryType) {
-    const data = await this.brandRepo.list(pagination, I18nContext.current()?.lang as string)
-    console.log('>>> check i18n', I18nContext.current()?.lang)
+  async list(query: GetBrandsQueryType) {
+    const data = await this.brandRepo.list({
+      page: query.page,
+      limit: query.limit,
+      name: query.name,
+      languageId: I18nContext.current()?.lang as string,
+      orderBy: query.orderBy,
+      sortBy: query.sortBy,
+    })
     return data
   }
 

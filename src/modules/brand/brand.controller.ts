@@ -5,12 +5,12 @@ import {
   GetBrandDetailResDTO,
   GetBrandParamsDTO,
   GetBrandsResDTO,
+  GetBrandsQueryDTO,
   UpdateBrandBodyDTO,
 } from 'src/modules/brand/brand.dto'
 import { BrandService } from 'src/modules/brand/brand.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
-import { PaginationQueryDTO } from 'src/shared/dtos/request.dto'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { ApiBearerAuth, ApiQuery, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger'
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator'
@@ -29,8 +29,10 @@ export class BrandController {
   @ResponseMessage('Brands fetched successfully')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'lang', required: false, type: String })
-  list(@Query() query: PaginationQueryDTO) {
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'orderBy', required: false, type: String, enum: ['asc', 'desc'] })
+  @ApiQuery({ name: 'sortBy', required: false, type: String, enum: ['createdAt', 'name'] })
+  list(@Query() query: GetBrandsQueryDTO) {
     return this.brandService.list(query)
   }
 

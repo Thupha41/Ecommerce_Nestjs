@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import {
   CreateBrandBodyType,
   GetBrandsResType,
@@ -6,35 +7,60 @@ import {
   BrandType,
   BrandIncludeTranslationType,
 } from 'src/modules/brand/models/brand.model'
-import { ALL_LANGUAGE_CODE } from 'src/shared/constants/other.constant'
-import { PaginationQueryType } from 'src/shared/models/request.model'
+import { ALL_LANGUAGE_CODE, OrderByType, SortBy, SortByType } from 'src/shared/constants/other.constant'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
 export class BrandRepo {
   constructor(private prismaService: PrismaService) {}
 
-  async list(pagination: PaginationQueryType, languageId: string): Promise<GetBrandsResType> {
-    const skip = (pagination.page - 1) * pagination.limit
-    const take = pagination.limit
+  async list({
+    limit,
+    page,
+    name,
+    languageId,
+    orderBy,
+    sortBy,
+  }: {
+    limit: number
+    page: number
+    name?: string
+    languageId: string
+    orderBy: OrderByType
+    sortBy: SortByType
+  }): Promise<GetBrandsResType> {
+    const skip = (page - 1) * limit
+    const take = limit
+    let where: Prisma.BrandWhereInput = {
+      deletedAt: null,
+    }
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive',
+      }
+    }
+    // Mặc định sort theo createdAt mới nhất
+    let caculatedOrderBy: Prisma.BrandOrderByWithRelationInput = {
+      createdAt: orderBy,
+    }
+    if (sortBy === SortBy.Name) {
+      caculatedOrderBy = {
+        name: orderBy,
+      }
+    }
     const [totalItems, data] = await Promise.all([
       this.prismaService.brand.count({
-        where: {
-          deletedAt: null,
-        },
+        where,
       }),
       this.prismaService.brand.findMany({
-        where: {
-          deletedAt: null,
-        },
+        where,
         include: {
           brandTranslations: {
             where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
           },
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: caculatedOrderBy,
         skip,
         take,
       }),
@@ -42,9 +68,9 @@ export class BrandRepo {
     return {
       items: data,
       totalItems,
-      page: pagination.page,
-      limit: pagination.limit,
-      totalPages: Math.ceil(totalItems / pagination.limit),
+      page: page,
+      limit: limit,
+      totalPages: Math.ceil(totalItems / limit),
     }
   }
 

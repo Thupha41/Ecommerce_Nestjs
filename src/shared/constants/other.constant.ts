@@ -18,6 +18,7 @@ export const SortBy = {
   StartDate: 'startDate',
   EndDate: 'endDate',
   Value: 'value',
+  Name: 'name',
 } as const
 
 export const PREFIX_PAYMENT_CODE = 'DH'
