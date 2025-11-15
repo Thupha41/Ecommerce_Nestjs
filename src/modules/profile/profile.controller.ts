@@ -18,7 +18,6 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get()
-  @ApiParam({ name: 'userId', required: true, type: Number })
   @ZodSerializerDto(GetUserProfileResDTO)
   @ResponseMessage('Profile found successfully')
   getProfile(@ActiveUser('userId') userId: number) {
