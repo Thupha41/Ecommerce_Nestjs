@@ -78,7 +78,7 @@ jobs:
   # ===========================
   # CD: Build & Push image khi push main
   # ===========================
-  cd_main:
+    cd_main:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
@@ -114,6 +114,7 @@ jobs:
           sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
 
           docker system prune -af || true
+          docker buildx prune -af || true
 
           echo "Disk usage AFTER cleanup:"
           df -h
@@ -129,11 +130,18 @@ jobs:
           echo "IMAGE_REF=${{ steps.meta.outputs.image_ref }}" >> .env
           echo "TAG=${{ steps.meta.outputs.tag }}"             >> .env
 
-      - name: Build images (compose)
-        run: docker compose --profile build build --pull
+          echo "----- .env used for build -----"
+          cat .env | sed 's/\(PASSWORD\|SECRET\|TOKEN\)=.*/\1=***REDACTED***/'
 
-      - name: Push images (compose)
-        run: docker compose --profile build push
+      - name: Show compose config (debug)
+        run: docker compose config
+
+      - name: Build app image
+        run: docker compose build app --pull
+
+      - name: Push app image
+        run: docker compose push app
+
 
   # ===========================
   # Deploy lên EC2
