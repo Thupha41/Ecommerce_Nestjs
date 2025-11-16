@@ -59,6 +59,10 @@ export const GetOrderListQuerySchema = PaginationQuerySchema.extend({
   status: OrderStatusSchema.optional(),
 })
 
+export const GetManageOrderListQuerySchema = GetOrderListQuerySchema.extend({
+  userId: z.coerce.number().int().positive().optional(),
+})
+
 export const GetOrderDetailResSchema = OrderSchema.extend({
   brandGroups: z.array(BrandGroupSchema),
 })
@@ -87,6 +91,7 @@ export const GetOrderParamsSchema = z
 
 export type GetOrderListResType = z.infer<typeof GetOrderListResSchema>
 export type GetOrderListQueryType = z.infer<typeof GetOrderListQuerySchema>
+export type GetManageOrderListQueryType = z.infer<typeof GetManageOrderListQuerySchema>
 export type GetOrderDetailResType = z.infer<typeof GetOrderDetailResSchema>
 export type GetOrderParamsType = z.infer<typeof GetOrderParamsSchema>
 export type CreateOrderBodyType = z.infer<typeof CreateOrderBodySchema>

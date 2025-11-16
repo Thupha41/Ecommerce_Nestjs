@@ -7,6 +7,7 @@ import {
   GetOrderDetailResSchema,
   GetOrderListQuerySchema,
   GetOrderListResSchema,
+  GetManageOrderListQuerySchema,
   GetOrderParamsSchema,
 } from 'src/modules/order/models/order.model'
 import { createResponseDTO } from 'src/shared/dtos/response.dto'
@@ -14,6 +15,8 @@ import { createResponseDTO } from 'src/shared/dtos/response.dto'
 export class GetOrderListResDTO extends createResponseDTO(GetOrderListResSchema) {}
 
 export class GetOrderListQueryDTO extends createZodDto(GetOrderListQuerySchema) {}
+
+export class GetManageOrderListQueryDTO extends createZodDto(GetManageOrderListQuerySchema) {}
 
 export class GetOrderDetailResDTO extends createResponseDTO(GetOrderDetailResSchema) {}
 

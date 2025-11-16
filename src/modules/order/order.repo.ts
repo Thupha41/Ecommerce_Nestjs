@@ -12,6 +12,7 @@ import {
   GetOrderDetailResType,
   GetOrderListQueryType,
   GetOrderListResType,
+  GetManageOrderListQueryType,
   CreateOrderBodyType,
   CreateOrderResType,
   BrandGroupType,
@@ -33,7 +34,81 @@ export class OrderRepo {
     const take = limit
     const where: Prisma.OrderWhereInput = {
       userId,
-      status,
+      deletedAt: null,
+      ...(status && { status }),
+    }
+
+    // Đếm tổng số order
+    const totalItem$ = this.prismaService.order.count({
+      where,
+    })
+    // Lấy list order
+    const data$ = await this.prismaService.order.findMany({
+      where,
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                brand: true,
+              },
+            },
+          },
+        },
+      },
+      skip,
+      take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+    const [data, totalItems] = await Promise.all([data$, totalItem$])
+    
+    // Group items by brand for each order
+    const ordersWithBrandGroups = data.map((order) => {
+      const brandGroupsMap = new Map<number, BrandGroupType>()
+      
+      for (const item of order.items) {
+        const brandId = item.product?.brandId
+        if (!brandId || !item.product?.brand) continue
+        
+        if (!brandGroupsMap.has(brandId)) {
+          brandGroupsMap.set(brandId, {
+            brandId,
+            brandName: item.product.brand.name,
+            brandLogo: item.product.brand.logo || '',
+            items: [],
+          })
+        }
+        
+        brandGroupsMap.get(brandId)!.items.push(item)
+      }
+      
+      const { items, ...orderWithoutItems } = order
+      
+      return {
+        ...orderWithoutItems,
+        brandGroups: Array.from(brandGroupsMap.values()),
+      }
+    })
+    
+    return {
+      items: ordersWithBrandGroups,
+      page,
+      limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+    }
+  }
+
+  async listAll(query: GetManageOrderListQueryType): Promise<GetOrderListResType> {
+    const { page, limit, status, userId } = query
+    const skip = (page - 1) * limit
+    const take = limit
+    const where: Prisma.OrderWhereInput = {
+      deletedAt: null,
+      ...(status && { status }),
+      ...(userId && { userId }),
     }
 
     // Đếm tổng số order
