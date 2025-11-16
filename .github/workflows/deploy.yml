@@ -78,7 +78,7 @@ jobs:
   # ===========================
   # CD: Build & Push image khi push main
   # ===========================
-    cd_main:
+  cd_main:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
