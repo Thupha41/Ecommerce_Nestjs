@@ -61,4 +61,4 @@ EXPOSE 3000
 # Add application env variables
 COPY .env .env
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
