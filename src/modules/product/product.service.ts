@@ -39,4 +39,17 @@ export class ProductService {
     }
     return product
   }
+
+  async getByProductNo(props: { productNo: string; userId?: number }) {
+    const product = await this.productRepo.getByProductNo({
+      productNo: props.productNo,
+      languageId: I18nContext.current()?.lang as string,
+      isPublic: true,
+      userId: props.userId,
+    })
+    if (!product) {
+      throw NotFoundRecordException
+    }
+    return product
+  }
 }

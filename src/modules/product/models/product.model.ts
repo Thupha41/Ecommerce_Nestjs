@@ -86,6 +86,12 @@ export const GetProductParamsSchema = z
   })
   .strict()
 
+export const GetProductByProductNoParamsSchema = z
+  .object({
+    productNo: z.string().trim().max(9),
+  })
+  .strict()
+
 export const GetProductDetailResSchema = ProductSchema.extend({
   productTranslations: z.array(ProductTranslationSchema),
   skus: z.array(SKUSchema),
@@ -183,4 +189,5 @@ export type GetManageProductsQueryType = z.infer<typeof GetManageProductsQuerySc
 export type GetProductDetailResType = z.infer<typeof GetProductDetailResSchema>
 export type CreateProductBodyType = z.infer<typeof CreateProductBodySchema>
 export type GetProductParamsType = z.infer<typeof GetProductParamsSchema>
+export type GetProductByProductNoParamsType = z.infer<typeof GetProductByProductNoParamsSchema>
 export type UpdateProductBodyType = z.infer<typeof UpdateProductBodySchema>

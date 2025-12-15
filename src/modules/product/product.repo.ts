@@ -245,6 +245,87 @@ export class ProductRepo {
     }
   }
 
+  async getByProductNo({
+    productNo,
+    languageId,
+    isPublic,
+    userId,
+  }: {
+    productNo: string
+    languageId: string
+    isPublic?: boolean
+    userId?: number
+  }): Promise<GetProductDetailResType | null> {
+    let where: Prisma.ProductWhereInput = {
+      productNo,
+      deletedAt: null,
+    }
+    if (isPublic === true) {
+      where.publishedAt = {
+        lte: new Date(),
+        not: null,
+      }
+    } else if (isPublic === false) {
+      where = {
+        ...where,
+        OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
+      }
+    }
+    const product = await this.prismaService.product.findFirst({
+      where,
+      include: {
+        productTranslations: {
+          where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
+        },
+        skus: {
+          where: {
+            deletedAt: null,
+          },
+        },
+        brand: {
+          include: {
+            brandTranslations: {
+              where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
+            },
+          },
+        },
+        categories: {
+          where: {
+            deletedAt: null,
+          },
+          include: {
+            categoryTranslations: {
+              where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
+            },
+          },
+        },
+      },
+    })
+
+    if (!product) {
+      return null
+    }
+
+    // Check if product is liked by user
+    let isLiked = false
+    if (userId) {
+      const like = await this.prismaService.like.findUnique({
+        where: {
+          userId_productId: {
+            userId,
+            productId: product.id,
+          },
+        },
+      })
+      isLiked = !!like
+    }
+
+    return {
+      ...product,
+      isLiked,
+    }
+  }
+
   async create({
     createdById,
     data,

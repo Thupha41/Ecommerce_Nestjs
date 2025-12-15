@@ -4,6 +4,7 @@ import { ZodSerializerDto } from 'nestjs-zod'
 import {
   GetProductDetailResDTO,
   GetProductParamsDTO,
+  GetProductByProductNoParamsDTO,
   GetProductsQueryDTO,
   GetProductsResDTO,
 } from 'src/modules/product/product.dto'
@@ -38,6 +39,18 @@ export class ProductController {
   list(@Query() query: GetProductsQueryDTO, @ActiveUser('userId') userId?: number) {
     return this.productService.list({
       query,
+      userId,
+    })
+  }
+
+  @Get('productNo/:productNo')
+  @ApiParam({ name: 'productNo', required: true, type: String })
+  @ApiOperation({ summary: 'Get product by productNo', description: 'Get product detail by productNo' })
+  @ZodSerializerDto(GetProductDetailResDTO)
+  @ResponseMessage('Product fetched successfully')
+  findByProductNo(@Param() params: GetProductByProductNoParamsDTO, @ActiveUser('userId') userId?: number) {
+    return this.productService.getByProductNo({
+      productNo: params.productNo,
       userId,
     })
   }
